@@ -36,3 +36,13 @@ void OBSJKDisplay::onResizeDisplay()
 	}
 }
 
+bool OBSJKDisplay::getSize(int &width, int &height)
+{
+	RECT rect;
+	if (::GetWindowRect((HWND)surface, &rect) && display){
+		 width = rect.right - rect.left;
+		 height = rect.bottom - rect.top;
+		 return true;
+	}
+	return false;
+}

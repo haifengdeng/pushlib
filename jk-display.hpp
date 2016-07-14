@@ -13,4 +13,5 @@ class OBSJKDisplay {
 public:
 	OBSJKDisplay(void * hwnd);
 	inline obs_display_t *GetDisplay() const {return display;}
+	bool getSize(int &width, int &height);
 };
