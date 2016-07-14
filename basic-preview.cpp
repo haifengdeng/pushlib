@@ -142,7 +142,7 @@ vec3 OBSBasicPreview::GetSnapOffset(const vec3 &tl, const vec3 &br)
 			"BasicWindow", "CenterSnapping");
 
 	const float clampDist = config_get_double(GetGlobalConfig(),
-		"BasicWindow", "SnapDistance") / Engine()->bcBase->previewScale;
+		"BasicWindow", "SnapDistance") / Engine_main()->previewScale;
 	const float centerX = br.x - (br.x - tl.x) / 2.0f;
 	const float centerY = br.y - (br.y - tl.y) / 2.0f;
 

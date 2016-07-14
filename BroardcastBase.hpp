@@ -1,7 +1,14 @@
 #pragma once
 
 #include "obs.hpp"
-#include "util\util.hpp"
+#include <obs.hpp>
+#include <util/lexer.h>
+#include <util/profiler.h>
+#include <util/util.hpp>
+#include <util/platform.h>
+#include <string>
+#include <memory>
+#include <vector>
 
 class BroardcastBase
 {
@@ -24,6 +31,8 @@ public:
 	float         previewScale = 0.0f;
 
 	OBSScene scene;
+
+	void OBSInit();
 	obs_service_t *BroardcastBase::GetService();
 	config_t *     Config() const;
 	OBSScene GetCurrentScene();

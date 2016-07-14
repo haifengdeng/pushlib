@@ -60,3 +60,8 @@ int BroardcastBase::devicePixelRatio()
 {
 	return 1;
 }
+
+void BroardcastBase::OBSInit()
+{
+
+}
