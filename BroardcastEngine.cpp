@@ -442,6 +442,8 @@ bool BroardcastEngine::InitLocale()
 
 	locale = lang;
 
+	locale = DEFAULT_LANG;
+	return true;
 	string englishPath;
 	if (!GetDataFilePath("locale/" DEFAULT_LANG ".ini", englishPath)) {
 		blog(LOG_ERROR, "Failed to find locale/" DEFAULT_LANG ".ini");
@@ -1059,11 +1061,12 @@ static auto ProfilerFree = [](void *)
 };
 
 static const char *run_program_init = "run_program_init";
-static int run_program(fstream &logFile)
+static int run_program()
 {
 	int ret = -1;
 
 	static auto profilerNameStore = CreateNameStore();
+	static fstream logFile;
 
 	std::unique_ptr<void, decltype(ProfilerFree)>
 		prof_release(static_cast<void*>(&ProfilerFree),
@@ -1552,6 +1555,7 @@ static void upgrade_settings(void)
 	os_closedir(dir);
 }
 
+#include "push-engine.h"
 int BroardcastEngine_Init()
 {
 #ifndef _WIN32
@@ -1569,12 +1573,10 @@ int BroardcastEngine_Init()
 	move_to_xdg();
 #endif
 
-	upgrade_settings();
-
-	fstream logFile;
+	//upgrade_settings();
 
 	curl_global_init(CURL_GLOBAL_ALL);
-	int ret = run_program(logFile);
+	int ret = run_program();
 	return ret;
 }
 
@@ -1582,5 +1584,11 @@ int BroardcastEngine_unInit()
 {
 	blog(LOG_INFO, "Number of memory leaks: %ld", bnum_allocs());
 	base_set_log_handler(nullptr, nullptr);
+	return 0;
+}
+
+int BroardcastAddDefaultAVSoruce()
+{
+	Engine_main()->CreateDefaultScene(true);
 	return 0;
 }

@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include <vector>
-
+#include <memory>
 #include "util\platform.h"
 #include <util/bmem.h>
 #include <util/dstr.h>
@@ -153,6 +153,21 @@ BroardcastBase::BroardcastBase()
 
 BroardcastBase::~BroardcastBase()
 {
+	signalHandlers.clear();
+	ClearSceneData();
+	service = nullptr;
+	outputHandler.reset();
+	obs_display_remove_draw_callback(previewer->GetDisplay(),
+		BroardcastBase::RenderMain, this);
+
+	obs_enter_graphics();
+	gs_vertexbuffer_destroy(box);
+	gs_vertexbuffer_destroy(boxLeft);
+	gs_vertexbuffer_destroy(boxTop);
+	gs_vertexbuffer_destroy(boxRight);
+	gs_vertexbuffer_destroy(boxBottom);
+	gs_vertexbuffer_destroy(circle);
+	obs_leave_graphics();
 }
 
 void BroardcastBase::CreateFirstRunSources()
@@ -162,15 +177,15 @@ void BroardcastBase::CreateFirstRunSources()
 
 	if (hasDesktopAudio)
 		ResetAudioDevice(Engine()->OutputAudioSource(), "default",
-		Str("Basic.DesktopDevice1"), 1);
+		"DesktopDevice1_pingan", 1);
 	if (hasInputAudio)
 		ResetAudioDevice(Engine()->InputAudioSource(), "default",
-		Str("Basic.AuxDevice1"), 3);
+		"AuxDevice1_input", 3);
 }
 
 void BroardcastBase::CreateDefaultScene(bool firstStart)
 {
-	scene = obs_scene_create(Str("Basic.Scene"));
+	scene = obs_scene_create("scene_pingan");
 
 	if (firstStart)
 		CreateFirstRunSources();
@@ -955,27 +970,11 @@ void BroardcastBase::ResetOutputs()
 void BroardcastBase::OBSInit()
 {
 	ProfileScope("OBSBasic::OBSInit");
-
-	const char *sceneCollection = config_get_string(Engine()->GlobalConfig(),
-		"Basic", "SceneCollectionFile");
-	char savePath[512];
-	char fileName[512];
 	int ret;
-
-	if (!sceneCollection)
-		throw "Failed to get scene collection name";
-
-	ret = snprintf(fileName, 512, "obs-studio/basic/scenes/%s.json",
-		sceneCollection);
-	if (ret <= 0)
-		throw "Failed to create scene collection file name";
-
-	ret = GetConfigPath(savePath, sizeof(savePath), fileName);
-	if (ret <= 0)
-		throw "Failed to get scene collection json file path";
 
 	if (!InitBasicConfig())
 		throw "Failed to load basic.ini";
+
 	if (!ResetAudio())
 		throw "Failed to initialize audio";
 
@@ -996,14 +995,100 @@ void BroardcastBase::OBSInit()
 	}
 
 	InitOBSCallbacks();
-
 	obs_load_all_modules();
-
-
 	ResetOutputs();
-
 	if (!InitService())
 		throw "Failed to initialize service";
-
 	InitPrimitives();
+
+	InitOBSTransition();
+	CreateDefaultScene(false);
+	SetCurrentScene(scene, true);
 }
+
+
+#include "push-engine.h"
+bool SourceTypeConvertString(InputSourceType type,string & id)
+{
+	switch (type)
+	{
+	case 	TEXT_SOURCE:
+		id = "text_ft2_source";
+		break;
+	case	IMAGE_FILE_SOURCE:
+		id = "image_source";
+		break;
+	case	MEDIA_FILE_SOURCE:
+		id = "ffmpeg_source";
+		break;
+	case	MONITOR_CAPTURE_SOURCE:
+		id = "monitor_capture";
+		break;
+	case	WINDOW_CAPTURE_SOURCE:
+		id = "window_capture";
+		break;
+	case	VIDEO_CAPTURE_SOURCE:
+		id = "dshow_input";
+		break;
+	case	AUDIO_INPUT_SOURCE:
+		id = "wasapi_input_capture";
+		break;
+	case	AUDIO_OUTPUT_SOURCE:
+		id = "wasapi_output_capture";
+		break;
+	default:
+		return false;
+	}
+	return true;
+}
+
+int GetDeviceVectorFromSourceType(int type)
+{
+	if (type != WINDOW_CAPTURE_SOURCE &&
+		type != VIDEO_CAPTURE_SOURCE &&
+		type != AUDIO_INPUT_SOURCE &&
+		type != AUDIO_OUTPUT_SOURCE)
+		return false;
+	string id;
+	SourceTypeConvertString((InputSourceType)type, id);
+	string tempName = id + "tempName";
+	vector<string>  DeviceArray;
+	obs_source_t *source = obs_get_source_by_name(tempName.c_str());
+	if (!source){
+		source = obs_source_create(id.c_str(), tempName.c_str(), NULL, nullptr);
+		if (!source)
+			return false;
+	}
+	using properties_delete_t = decltype(&obs_properties_destroy);
+	using properties_t =
+		std::unique_ptr<obs_properties_t, properties_delete_t>;
+	properties_t  properties(nullptr, obs_properties_destroy);
+	properties.reset(obs_source_properties(source));
+
+	obs_property_t *property = obs_properties_first(properties.get());
+	bool hasNoProperties = !property;
+
+	while (property) {
+		const char        *name = obs_property_name(property);
+		obs_property_type type = obs_property_get_type(property);
+
+		if (!obs_property_visible(property))
+			goto End;
+
+		if (type == OBS_PROPERTY_LIST){
+			const char       *name = obs_property_name(property);
+			obs_combo_type   type = obs_property_list_type(property);
+			obs_combo_format format = obs_property_list_format(property);
+			size_t           count = obs_property_list_item_count(property);
+			for (int i = 0; i < count; i++){
+				const char *name_item = obs_property_list_item_name(property, i);
+				blog(LOG_INFO, "%s: %s %d/%d %s", id.c_str(), name, i, count, name_item);
+			}
+		}
+
+End:
+		obs_property_next(&property);
+	}
+	return true;
+}
+

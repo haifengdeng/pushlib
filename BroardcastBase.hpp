@@ -51,6 +51,7 @@ public:
 	gs_vertbuffer_t *boxBottom = nullptr;
 	gs_vertbuffer_t *circle = nullptr;
 
+
 	int           previewX = 0, previewY = 0;
 	int           previewCX = 0, previewCY = 0;
 	float         previewScale = 0.0f;
@@ -61,21 +62,27 @@ public:
 
 	void          CreateFirstRunSources();
 	void          CreateDefaultScene(bool firstStart);
-
 	void          ClearSceneData();
-
-
 	void          Load(const char *file);
-
-
 	bool          InitService();
-
 	bool          InitBasicConfigDefaults();
 	bool          InitBasicConfig();
-
 	void          InitOBSCallbacks();
-
+	
 	void          InitPrimitives();
+
+	//transition
+	obs_source_t  *fadeTransition = nullptr;
+    void          InitDefaultTransitions();
+	void          InitTransition(obs_source_t *transition);
+	void          TransitionStopped();
+	void          TransitionToScene(obs_scene_t *scene, bool force);
+	void          TransitionToScene(obs_source_t *source, bool force);
+	void          SetTransition(obs_source_t *transition);
+	void          SetCurrentScene(obs_source_t *scene, bool force);
+	void          SetCurrentScene(obs_scene_t *scene, bool force);
+	void          InitOBSTransition();
+	//
 
 	volatile bool previewProgramMode = false;
 	inline bool IsPreviewProgramMode() const
