@@ -6,6 +6,7 @@ OBSJKDisplay::OBSJKDisplay(void * hwnd)
 {
 	surface = hwnd;
 	display = NULL;
+	CreateDisplay();
 }
 
 void OBSJKDisplay::CreateDisplay()

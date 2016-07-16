@@ -139,6 +139,8 @@ public:
 	void StartStreaming();
 	void StopStreaming();
 	void EnablePreviewDisplay(bool enable);
+
+	void setRenderWindow(void* Window);
 };
 
 int GetProfilePath(char *path, size_t size, const char *file);

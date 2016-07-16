@@ -919,11 +919,6 @@ void BroardcastBase::StopStreaming()
 	}
 }
 
-void BroardcastBase::EnablePreviewDisplay(bool enable)
-{
-	obs_display_set_enabled(previewer->GetDisplay(), enable);
-}
-
 config_t *BroardcastBase::Config() const
 {
 	return basicConfig;
@@ -965,6 +960,27 @@ void BroardcastBase::ResetOutputs()
 	else {
 		outputHandler->Update();
 	}
+}
+
+void BroardcastBase::EnablePreviewDisplay(bool enable)
+{
+	obs_display_set_enabled(previewer->GetDisplay(), enable);
+}
+
+void BroardcastBase::setRenderWindow(void* Window)
+{
+	if (previewer)
+		return;
+	previewer = new OBSBasicPreview(Window);
+	obs_display_add_draw_callback(previewer->GetDisplay(),
+		BroardcastBase::RenderMain, this);
+
+	struct obs_video_info ovi;
+	if (obs_get_video_info(&ovi)){
+		//TODO;
+		//ResizePreview(ovi.base_width, ovi.base_height);
+	}
+	EnablePreviewDisplay(true);
 }
 
 void BroardcastBase::OBSInit()
@@ -1092,3 +1108,7 @@ End:
 	return true;
 }
 
+void setRenderWindow(void* Window)
+{
+	Engine_main()->setRenderWindow(Window);
+}
