@@ -1068,10 +1068,6 @@ static int run_program()
 	static auto profilerNameStore = CreateNameStore();
 	static fstream logFile;
 
-	std::unique_ptr<void, decltype(ProfilerFree)>
-		prof_release(static_cast<void*>(&ProfilerFree),
-		ProfilerFree);
-
 	profiler_start();
 	profile_register_root(run_program_init, 0);
 

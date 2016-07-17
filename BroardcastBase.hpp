@@ -85,7 +85,7 @@ public:
 	void          InitPrimitives();
 
 	//transition
-	obs_source_t  *fadeTransition = nullptr;
+	OBSSource     fadeTransition;
     void          InitDefaultTransitions();
 	void          InitTransition(obs_source_t *transition);
 	void          TransitionStopped();
