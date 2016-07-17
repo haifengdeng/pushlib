@@ -63,3 +63,19 @@ PUSH_ENGINE_EXPORT std::string getVideoColorSpace(const char* srcName);
 PUSH_ENGINE_EXPORT std::string enumColorRanges(const char* srcName, size_t idx);
 PUSH_ENGINE_EXPORT int setVideoColorRange(const char* srcName, const char *colorrange);
 PUSH_ENGINE_EXPORT std::string getVideoColorRange(const char* srcName);
+
+//枚举、设置音频输入设备
+PUSH_ENGINE_EXPORT std::string enumAudioInDevices(const char* srcName, size_t idx);
+PUSH_ENGINE_EXPORT int setAudioInputDevice(const char* srcName, const char *deviceName);
+PUSH_ENGINE_EXPORT std::string getAudioInputDevice(const char* srcName);
+
+//枚举、设置音频输出设备
+PUSH_ENGINE_EXPORT std::string enumAudioOutDevices(const char* srcName, size_t idx);
+PUSH_ENGINE_EXPORT int setAudioOutputDevice(const char* srcName, const char *deviceName);
+PUSH_ENGINE_EXPORT std::string getAudioOutputDevice(const char* srcName);
+
+
+//获取，设置音频输入,输出设备的音量
+//PUSH_ENGINE_EXPORT bool hasAudioProperty(const char* srcName);
+//PUSH_ENGINE_EXPORT int getAudioVolume(const char* srcName);
+//PUSH_ENGINE_EXPORT int setAudioVolume(const char* srcName, int vol);

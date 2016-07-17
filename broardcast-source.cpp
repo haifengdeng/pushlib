@@ -78,6 +78,7 @@ int BroardcastBase::setVisible(const char *srcName, bool isShow)
 	}
 
 	obs_sceneitem_set_visible(sourceArray[source].item, isShow);
+	obs_source_release(source);
 }
 
 static bool select_one(obs_scene_t *scene, obs_sceneitem_t *item, void *param)
@@ -101,6 +102,7 @@ int BroardcastBase::setSelection(const char* srcName, bool select)
 	}
 
 	obs_scene_enum_items(scene, select_one, (obs_sceneitem_t*)sourceArray[source].item);
+	obs_source_release(source);
 	return 0;
 }
 
@@ -126,6 +128,8 @@ int BroardcastBase::setLogo(const char *imageFilePath)
 		blog(LOG_ERROR, "can not create logo source.");
 		return -1;
 	}
+	obs_source_release(source);
+
 	logoPath = imageFilePath;
 	obs_data_t * settings = sourceArray[source].setting;
 	obs_data_set_string(settings, "file", imageFilePath);
@@ -139,6 +143,7 @@ int BroardcastBase::setLogoGeometry(int x, int y, int width, int height)
 		blog(LOG_ERROR, "can not find logo.");
 		return -1;
 	}
+	obs_source_release(source);
 	obs_sceneitem_t * item = sourceArray[source].item;
 	logo_geometry.x = x;
 	logo_geometry.y = y;
@@ -165,6 +170,7 @@ int BroardcastBase::removeLogo()
 		blog(LOG_ERROR, "can not find logo.");
 		return -1;
 	}
+	obs_source_release(source);
 	obs_sceneitem_t * item = sourceArray[source].item;
 	obs_sceneitem_remove(item);
 	obs_source_remove(source);
@@ -218,11 +224,12 @@ enum ResType {
 std::string BroardcastBase::enumVideoDevices(const char * srcName, size_t idx)
 {
 	obs_source_t  * source = obs_get_source_by_name(srcName);
-	if (source){
-		blog(LOG_ERROR, "source %s has existed.", srcName);
-		obs_source_release(source);
+	if (!source){
+		blog(LOG_ERROR, "source %s has not existed.", srcName);
 		return "";
 	}
+	obs_source_release(source);
+
 	obs_properties_t * properties = sourceArray[source].properties;
 	obs_property_t *property = obs_properties_first(properties);
 	bool hasNoProperties = !property;
@@ -268,11 +275,12 @@ bool BroardcastBase::getVideoDefault(const char *srcName)
 int BroardcastBase::setVideoDevice(const char* srcName, const char *deviceName)
 {
 	obs_source_t  * source = obs_get_source_by_name(srcName);
-	if (source){
-		blog(LOG_ERROR, "source %s has existed.", srcName);
-		obs_source_release(source);
+	if (!source){
+		blog(LOG_ERROR, "source %s has not existed.", srcName);
 		return -1;
 	}
+	obs_source_release(source);
+
 	obs_properties_t * properties = sourceArray[source].properties;
 	obs_data_t *settings = sourceArray[source].setting;
 
@@ -304,11 +312,12 @@ int BroardcastBase::setVideoDevice(const char* srcName, const char *deviceName)
 std::string BroardcastBase::getVideoDevice(const char* srcName)
 {
 	obs_source_t  * source = obs_get_source_by_name(srcName);
-	if (source){
-		blog(LOG_ERROR, "source %s has existed.", srcName);
-		obs_source_release(source);
+	if (!source){
+		blog(LOG_ERROR, "source %s has not existed.", srcName);
 		return "";
 	}
+	obs_source_release(source);
+
 	obs_data_t * settings = sourceArray[source].setting;
 	return obs_data_get_string(settings, VIDEO_DEVICE_ID);
 }
@@ -338,12 +347,11 @@ std::string getVideoDevice(const char* srcName)
 void BroardcastBase::setResolutionType2Custom(const char *srcName)
 {
 	obs_source_t  * source = obs_get_source_by_name(srcName);
-	if (source){
-		blog(LOG_ERROR, "source %s has existed.", srcName);
-		obs_source_release(source);
+	if (!source){
+		blog(LOG_ERROR, "source %s has not existed.", srcName);
 		return;
 	}
-
+	obs_source_release(source);
 	obs_data_t * settings = sourceArray[source].setting;
 	int res_type = obs_data_get_int(settings, RES_TYPE);
 	if (res_type != ResType_Custom){
@@ -377,12 +385,11 @@ std::string BroardcastBase::enumResolutions(const char* srcName, size_t idx)
 {
 	setResolutionType2Custom(srcName);
 	obs_source_t  * source = obs_get_source_by_name(srcName);
-	if (source){
-		blog(LOG_ERROR, "source %s has existed.", srcName);
-		obs_source_release(source);
+	if (!source){
+		blog(LOG_ERROR, "source %s has not existed.", srcName);
 		return "";
 	}
-
+	obs_source_release(source);
 	obs_properties_t * properties = sourceArray[source].properties;
 	obs_data_t *settings = sourceArray[source].setting;
 
@@ -413,12 +420,11 @@ int BroardcastBase::setVideoResolution(const char* srcName, const char *resoluti
 {
 	setResolutionType2Custom(srcName);
 	obs_source_t  * source = obs_get_source_by_name(srcName);
-	if (source){
-		blog(LOG_ERROR, "source %s has existed.", srcName);
-		obs_source_release(source);
+	if (!source){
+		blog(LOG_ERROR, "source %s has not existed.", srcName);
 		return -1;
 	}
-
+	obs_source_release(source);
 	obs_properties_t * properties = sourceArray[source].properties;
 	obs_data_t *settings = sourceArray[source].setting;
 
@@ -450,12 +456,11 @@ int BroardcastBase::setVideoResolution(const char* srcName, const char *resoluti
 std::string BroardcastBase::getVideoResolution(const char* srcName)
 {
 	obs_source_t  * source = obs_get_source_by_name(srcName);
-	if (source){
-		blog(LOG_ERROR, "source %s has existed.", srcName);
-		obs_source_release(source);
+	if (!source){
+		blog(LOG_ERROR, "source %s has not existed.", srcName);
 		return "";
 	}
-
+	obs_source_release(source);
 	obs_data_t *settings = sourceArray[source].setting;
 
 	return obs_data_get_string(settings, RESOLUTION);
@@ -466,12 +471,11 @@ int BroardcastBase::enumFPSs(const char* srcName, size_t idx)
 {
 	setResolutionType2Custom(srcName);
 	obs_source_t  * source = obs_get_source_by_name(srcName);
-	if (source){
-		blog(LOG_ERROR, "source %s has existed.", srcName);
-		obs_source_release(source);
+	if (!source){
+		blog(LOG_ERROR, "source %s has not existed.", srcName);
 		return -1;
 	}
-
+	obs_source_release(source);
 	obs_properties_t * properties = sourceArray[source].properties;
 	obs_data_t *settings = sourceArray[source].setting;
 
@@ -502,12 +506,11 @@ int BroardcastBase::setVideoFPS(const char* srcName, int fps)
 {
 	setResolutionType2Custom(srcName);
 	obs_source_t  * source = obs_get_source_by_name(srcName);
-	if (source){
-		blog(LOG_ERROR, "source %s has existed.", srcName);
-		obs_source_release(source);
+	if (!source){
+		blog(LOG_ERROR, "source %s has not  existed.", srcName);
 		return -1;
 	}
-
+	obs_source_release(source);
 	obs_properties_t * properties = sourceArray[source].properties;
 	obs_data_t *settings = sourceArray[source].setting;
 
@@ -539,12 +542,11 @@ int BroardcastBase::setVideoFPS(const char* srcName, int fps)
 int BroardcastBase::getVideoFPS(const char* srcName)
 {
 	obs_source_t  * source = obs_get_source_by_name(srcName);
-	if (source){
-		blog(LOG_ERROR, "source %s has existed.", srcName);
-		obs_source_release(source);
+	if (!source){
+		blog(LOG_ERROR, "source %s has not existed.", srcName);
 		return -1;
 	}
-
+	obs_source_release(source);
 	obs_data_t *settings = sourceArray[source].setting;
 
 	return obs_data_get_int(settings, FRAME_INTERVAL);
@@ -554,11 +556,11 @@ int BroardcastBase::enumVideoFormats(const char* srcName, size_t idx)
 {
 	setResolutionType2Custom(srcName);
 	obs_source_t  * source = obs_get_source_by_name(srcName);
-	if (source){
-		blog(LOG_ERROR, "source %s has existed.", srcName);
-		obs_source_release(source);
+	if (!source){
+		blog(LOG_ERROR, "source %s has not existed.", srcName);
 		return -1;
 	}
+	obs_source_release(source);
 
 	obs_properties_t * properties = sourceArray[source].properties;
 	obs_data_t *settings = sourceArray[source].setting;
@@ -590,12 +592,11 @@ int BroardcastBase::setVideoFormat(const char* srcName,int format)
 {
 	setResolutionType2Custom(srcName);
 	obs_source_t  * source = obs_get_source_by_name(srcName);
-	if (source){
-		blog(LOG_ERROR, "source %s has existed.", srcName);
-		obs_source_release(source);
+	if (!source){
+		blog(LOG_ERROR, "source %s has not existed.", srcName);
 		return -1;
 	}
-
+	obs_source_release(source);
 	obs_properties_t * properties = sourceArray[source].properties;
 	obs_data_t *settings = sourceArray[source].setting;
 
@@ -627,12 +628,11 @@ int BroardcastBase::setVideoFormat(const char* srcName,int format)
 int BroardcastBase::getVideoFormat(const char* srcName)
 {
 	obs_source_t  * source = obs_get_source_by_name(srcName);
-	if (source){
-		blog(LOG_ERROR, "source %s has existed.", srcName);
-		obs_source_release(source);
+	if (!source){
+		blog(LOG_ERROR, "source %s has not  existed.", srcName);
 		return -1;
 	}
-
+	obs_source_release(source);
 	obs_data_t *settings = sourceArray[source].setting;
 
 	return obs_data_get_int(settings, VIDEO_FORMAT);
@@ -641,12 +641,11 @@ int BroardcastBase::getVideoFormat(const char* srcName)
 std::string BroardcastBase::enumColorSpaces(const char* srcName, size_t idx)
 {
 	obs_source_t  * source = obs_get_source_by_name(srcName);
-	if (source){
-		blog(LOG_ERROR, "source %s has existed.", srcName);
-		obs_source_release(source);
+	if (!source){
+		blog(LOG_ERROR, "source %s has not existed.", srcName);
 		return "";
 	}
-
+	obs_source_release(source);
 	obs_properties_t * properties = sourceArray[source].properties;
 	obs_data_t *settings = sourceArray[source].setting;
 
@@ -676,12 +675,11 @@ std::string BroardcastBase::enumColorSpaces(const char* srcName, size_t idx)
 int BroardcastBase::setVideoColorSpace(const char* srcName, const char *colorspace)
 {
 	obs_source_t  * source = obs_get_source_by_name(srcName);
-	if (source){
-		blog(LOG_ERROR, "source %s has existed.", srcName);
-		obs_source_release(source);
+	if (!source){
+		blog(LOG_ERROR, "source %s has not existed.", srcName);
 		return -1;
 	}
-
+	obs_source_release(source);
 	obs_properties_t * properties = sourceArray[source].properties;
 	obs_data_t *settings = sourceArray[source].setting;
 
@@ -713,11 +711,11 @@ int BroardcastBase::setVideoColorSpace(const char* srcName, const char *colorspa
 std::string BroardcastBase::getVideoColorSpace(const char* srcName)
 {
 	obs_source_t  * source = obs_get_source_by_name(srcName);
-	if (source){
-		blog(LOG_ERROR, "source %s has existed.", srcName);
-		obs_source_release(source);
+	if (!source){
+		blog(LOG_ERROR, "source %s has not existed.", srcName);
 		return "";
 	}
+	obs_source_release(source);
 
 	obs_data_t *settings = sourceArray[source].setting;
 
@@ -727,12 +725,11 @@ std::string BroardcastBase::getVideoColorSpace(const char* srcName)
 std::string BroardcastBase::enumColorRanges(const char* srcName, size_t idx)
 {
 	obs_source_t  * source = obs_get_source_by_name(srcName);
-	if (source){
-		blog(LOG_ERROR, "source %s has existed.", srcName);
-		obs_source_release(source);
+	if (!source){
+		blog(LOG_ERROR, "source %s has not existed.", srcName);
 		return "";
 	}
-
+	obs_source_release(source);
 	obs_properties_t * properties = sourceArray[source].properties;
 	obs_data_t *settings = sourceArray[source].setting;
 
@@ -762,11 +759,11 @@ std::string BroardcastBase::enumColorRanges(const char* srcName, size_t idx)
 int BroardcastBase::setVideoColorRange(const char* srcName, const char *colorrange)
 {
 	obs_source_t  * source = obs_get_source_by_name(srcName);
-	if (source){
-		blog(LOG_ERROR, "source %s has existed.", srcName);
-		obs_source_release(source);
+	if (!source){
+		blog(LOG_ERROR, "source %s has not existed.", srcName);
 		return -1;
 	}
+	obs_source_release(source);
 
 	obs_properties_t * properties = sourceArray[source].properties;
 	obs_data_t *settings = sourceArray[source].setting;
@@ -799,12 +796,11 @@ int BroardcastBase::setVideoColorRange(const char* srcName, const char *colorran
 std::string BroardcastBase::getVideoColorRange(const char* srcName)
 {
 	obs_source_t  * source = obs_get_source_by_name(srcName);
-	if (source){
-		blog(LOG_ERROR, "source %s has existed.", srcName);
-		obs_source_release(source);
+	if (!source){
+		blog(LOG_ERROR, "source %s has not existed.", srcName);
 		return "";
 	}
-
+	obs_source_release(source);
 	obs_data_t *settings = sourceArray[source].setting;
 
 	return obs_data_get_string(settings, COLOR_RANGE);
@@ -877,4 +873,131 @@ int setVideoColorRange(const char* srcName, const char *colorrange)
 std::string getVideoColorRange(const char* srcName)
 {
 	return Engine_main()->getVideoColorRange(srcName);
+}
+
+
+#define OPT_DEVICE_ID         "device_id"
+#define OPT_USE_DEVICE_TIMING "use_device_timing"
+
+//枚举、设置音频输入设备
+std::string BroardcastBase::enumAudioInDevices(const char* srcName, size_t idx)
+{
+	obs_source_t  * source = obs_get_source_by_name(srcName);
+	if (!source){
+		blog(LOG_ERROR, "source %s has not existed.", srcName);
+		return "";
+	}
+	obs_source_release(source);
+
+	obs_properties_t * properties = sourceArray[source].properties;
+	obs_data_t *settings = sourceArray[source].setting;
+
+	obs_property_t *property = obs_properties_first(properties);
+	bool hasNoProperties = !property;
+
+	while (property) {
+		const char        *name = obs_property_name(property);
+		obs_property_type type = obs_property_get_type(property);
+
+		if (!obs_property_visible(property))
+			goto End;
+
+		if (strcmp(OPT_DEVICE_ID, name) == 0 && type == OBS_COMBO_TYPE_LIST){
+			obs_combo_format format = obs_property_list_format(property);
+			size_t           count = obs_property_list_item_count(property);
+			if (idx > count)
+				return "";
+			else
+				return obs_property_list_item_name(property, idx);
+		}
+	End:
+		obs_property_next(&property);
+	}
+	return "";
+}
+int BroardcastBase::setAudioInputDevice(const char* srcName, const char *deviceName)
+{
+	obs_source_t  * source = obs_get_source_by_name(srcName);
+	if (!source){
+		blog(LOG_ERROR, "source %s has not existed.", srcName);
+		return -1;
+	}
+	obs_source_release(source);
+
+	obs_properties_t * properties = sourceArray[source].properties;
+	obs_data_t *settings = sourceArray[source].setting;
+
+	obs_property_t *property = obs_properties_first(properties);
+	bool hasNoProperties = !property;
+
+	while (property) {
+		const char        *name = obs_property_name(property);
+		obs_property_type type = obs_property_get_type(property);
+
+		if (!obs_property_visible(property))
+			goto End;
+
+		if (strcmp(OPT_DEVICE_ID, name) == 0 && type == OBS_COMBO_TYPE_LIST){
+			obs_combo_format format = obs_property_list_format(property);
+			size_t           count = obs_property_list_item_count(property);
+			obs_data_set_string(settings, OPT_DEVICE_ID, deviceName);
+			obs_source_update(source, settings);
+		}
+	End:
+		obs_property_next(&property);
+	}
+	return  -1;
+}
+std::string BroardcastBase::getAudioInputDevice(const char* srcName)
+{
+	obs_source_t  * source = obs_get_source_by_name(srcName);
+	if (!source){
+		blog(LOG_ERROR, "source %s has not existed.", srcName);	
+		return "";
+	}
+	obs_source_release(source);
+
+	obs_data_t *settings = sourceArray[source].setting;
+	return obs_data_get_string(settings, OPT_DEVICE_ID);
+}
+
+//枚举、设置音频输出设备
+std::string BroardcastBase::enumAudioOutDevices(const char* srcName, size_t idx)
+{
+	return enumAudioInDevices(srcName,idx);
+}
+int BroardcastBase::setAudioOutputDevice(const char* srcName, const char *deviceName)
+{
+	return setAudioInputDevice(srcName, deviceName);
+}
+std::string BroardcastBase::getAudioOutputDevice(const char* srcName)
+{
+	return getAudioInputDevice(srcName);
+}
+
+
+std::string enumAudioInDevices(const char* srcName, size_t idx)
+{
+	return Engine_main()->enumAudioInDevices(srcName, idx);
+}
+int setAudioInputDevice(const char* srcName, const char *deviceName)
+{
+	return Engine_main()->setAudioInputDevice(srcName, deviceName);
+}
+std::string getAudioInputDevice(const char* srcName)
+{
+	return Engine_main()->getAudioInputDevice(srcName);
+}
+
+std::string enumAudioOutDevices(const char* srcName, size_t idx)
+{
+	return Engine_main()->enumAudioOutDevices(srcName, idx);
+}
+int setAudioOutputDevice(const char* srcName, const char *deviceName)
+{
+	return Engine_main()->setAudioOutputDevice(srcName, deviceName);
+}
+std::string getAudioOutputDevice(const char* srcName)
+{
+	return Engine_main()->getAudioOutputDevice(srcName);
 }

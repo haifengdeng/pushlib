@@ -214,6 +214,16 @@ public:
 	std::string enumColorRanges(const char* srcName, size_t idx);
 	int setVideoColorRange(const char* srcName, const char *colorrange);
 	std::string getVideoColorRange(const char* srcName);
+
+	//枚举、设置音频输入设备
+	std::string enumAudioInDevices(const char* srcName, size_t idx);
+	int setAudioInputDevice(const char* srcName, const char *deviceName);
+	std::string getAudioInputDevice(const char* srcName);
+
+	//枚举、设置音频输出设备
+	std::string enumAudioOutDevices(const char* srcName, size_t idx);
+	int setAudioOutputDevice(const char* srcName, const char *deviceName);
+	std::string getAudioOutputDevice(const char* srcName);
 };
 
 int GetProfilePath(char *path, size_t size, const char *file);
