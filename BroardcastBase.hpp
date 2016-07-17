@@ -190,6 +190,30 @@ public:
 	bool         getVideoDefault(const char *srcName);
 	int          setVideoDevice(const char* srcName, const char *deviceName);
 	std::string  getVideoDevice(const char* srcName);
+
+	//set Resolution type to custom
+	void setResolutionType2Custom(const char *srcName);
+	//枚举、设置视频设备支持的分辨率
+	std::string enumResolutions(const char* srcName, size_t idx);
+	int setVideoResolution(const char* srcName, const char *resolution);
+	std::string getVideoResolution(const char* srcName);
+
+	//枚举、设置视频设备支持的帧率
+	int enumFPSs(const char* srcName, size_t idx);
+	int setVideoFPS(const char* srcName, int fps);
+	int getVideoFPS(const char* srcName);
+	//枚举、设置视频设备支持的Video formats
+	int enumVideoFormats(const char* srcName, size_t idx);
+	int setVideoFormat(const char* srcName, int format);
+	int getVideoFormat(const char* srcName);
+	//枚举、设置视频设备支持的Color Space
+	std::string enumColorSpaces(const char* srcName, size_t idx);
+	int setVideoColorSpace(const char* srcName, const char *colorspace);
+	std::string getVideoColorSpace(const char* srcName);
+	//枚举、设置视频设备支持的Color Range
+	std::string enumColorRanges(const char* srcName, size_t idx);
+	int setVideoColorRange(const char* srcName, const char *colorrange);
+	std::string getVideoColorRange(const char* srcName);
 };
 
 int GetProfilePath(char *path, size_t size, const char *file);
