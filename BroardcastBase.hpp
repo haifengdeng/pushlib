@@ -118,8 +118,6 @@ public:
 	~BroardcastBase();
 
 	void OBSInit();
-	obs_service_t *BroardcastBase::GetService();
-	void          SetService(obs_service_t *service);
 	bool StreamingActive() const;
 	bool Active() const;
 
@@ -154,6 +152,12 @@ public:
 		obs_properties_t *properties;
 	};
 	std::map<obs_source_t *, struct SourceInfo>  sourceArray;
+
+	//service 
+	obs_service_t * GetService();
+	void updateServiceSetting(std::string server_, std::string key_);
+	std::string server_name;
+	std::string key_name;
 };
 
 int GetProfilePath(char *path, size_t size, const char *file);

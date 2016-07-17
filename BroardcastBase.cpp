@@ -196,7 +196,7 @@ bool BroardcastBase::InitService()
 {
 	ProfileScope("OBSBasic::InitService");
 
-	service = obs_service_create("rtmp_common", "default_service", nullptr,
+	service = obs_service_create("rtmp_custom", "default_service", nullptr,
 		nullptr);
 	if (!service)
 		return false;
@@ -208,17 +208,25 @@ bool BroardcastBase::InitService()
 obs_service_t *BroardcastBase::GetService()
 {
 	if (!service) {
-		service = obs_service_create("rtmp_common", NULL, NULL,
+		service = obs_service_create("rtmp_custom", NULL, NULL,
 			nullptr);
 		obs_service_release(service);
 	}
 	return service;
 }
 
-void BroardcastBase::SetService(obs_service_t *newService)
+void BroardcastBase::updateServiceSetting(string server_, string key_)
 {
-	if (newService)
-		service = newService;
+	server_name = server_;
+	key_name = key_;
+	obs_data_t *settings = obs_data_create();
+	obs_data_set_string(settings, "server", server_.c_str());
+	obs_data_set_string(settings, "key", key_.c_str());
+
+	obs_service_t * service_ = GetService();
+
+	obs_service_update(service_, settings);
+	obs_data_release(settings);
 }
 
 bool BroardcastBase::StreamingActive() const
@@ -1076,4 +1084,21 @@ End:
 void setRenderWindow(void* Window)
 {
 	Engine_main()->setRenderWindow(Window);
+}
+
+
+//功能：开始推流
+//回调：OnStartPublish
+int startStreaming(string server_,string key_)
+{
+	Engine_main()->updateServiceSetting(server_, key_);
+	Engine_main()->StartStreaming();
+	return 0;
+}
+//功能：停止推流
+//回调：OnStopPublish
+int stopStreaming()
+{
+	Engine_main()->StopStreaming();
+	return 0;
 }
