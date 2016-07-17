@@ -1586,9 +1586,3 @@ int BroardcastEngine_unInit()
 	base_set_log_handler(nullptr, nullptr);
 	return 0;
 }
-
-int BroardcastAddDefaultAVSoruce()
-{
-	Engine_main()->CreateDefaultScene(true);
-	return 0;
-}

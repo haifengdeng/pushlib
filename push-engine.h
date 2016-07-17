@@ -22,7 +22,6 @@ enum  InputSourceType{
 
 PUSH_ENGINE_EXPORT int BroardcastEngine_Init();
 
-PUSH_ENGINE_EXPORT int BroardcastAddDefaultAVSoruce();
 PUSH_ENGINE_EXPORT int stopStreaming();
 PUSH_ENGINE_EXPORT int startStreaming();
 
