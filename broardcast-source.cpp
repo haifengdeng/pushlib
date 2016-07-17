@@ -68,13 +68,47 @@ int  BroardcastBase::addNewSource(const char* srcName, int type)
 	return -1;
 }
 
+int BroardcastBase::setVisible(const char *srcName, bool isShow)
+{
+	obs_source_t * source = obs_get_source_by_name(srcName);
+
+	if (!source){
+		blog(LOG_ERROR, "can not find %s source.",srcName);
+		return -1;
+	}
+
+	obs_sceneitem_set_visible(sourceArray[source].item, isShow);
+}
+
+static bool select_one(obs_scene_t *scene, obs_sceneitem_t *item, void *param)
+{
+	obs_sceneitem_t *selectedItem =
+		reinterpret_cast<obs_sceneitem_t*>(param);
+	obs_sceneitem_select(item, (selectedItem == item));
+
+	UNUSED_PARAMETER(scene);
+	return true;
+}
+
+
+int BroardcastBase::setSelection(const char* srcName, bool select)
+{
+	obs_source_t * source = obs_get_source_by_name(srcName);
+
+	if (!source){
+		blog(LOG_ERROR, "can not find %s source.", srcName);
+		return -1;
+	}
+
+	obs_scene_enum_items(scene, select_one, (obs_sceneitem_t*)sourceArray[source].item);
+	return 0;
+}
 
 //功能：新建名为srcName，类型为type的源
 int addNewSource(const char* srcName, InputSourceType type)
 {
 	return Engine_main()->addNewSource(srcName, type);
 }
-
 
 //logo
 std::string  BroardcastBase::getLogo()

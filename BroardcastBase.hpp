@@ -152,6 +152,8 @@ public:
 
 	//source
 	int  addNewSource(const char* srcName, int type);
+	int setVisible(const char *srcName, bool isShow);
+	int setSelection(const char* srcName, bool select);
 	struct SourceInfo{
 		int             type;
 		obs_source_t    *source;
