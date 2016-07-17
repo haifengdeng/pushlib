@@ -14,7 +14,8 @@
 #include "BroardcastEngine.hpp"
 #include "basic-main-outputs.hpp"
 #include "basic-preview.hpp"
-
+#include "push-engine.h"
+#include "source_helper.hpp"
 using namespace std;
 
 int GetProfilePath(char *path, size_t size, const char *file)
@@ -1020,42 +1021,6 @@ void BroardcastBase::OBSInit()
 	InitOBSTransition();
 	CreateDefaultScene(false);
 	SetCurrentScene(scene, true);
-}
-
-
-#include "push-engine.h"
-bool SourceTypeConvertString(InputSourceType type,string & id)
-{
-	switch (type)
-	{
-	case 	TEXT_SOURCE:
-		id = "text_ft2_source";
-		break;
-	case	IMAGE_FILE_SOURCE:
-		id = "image_source";
-		break;
-	case	MEDIA_FILE_SOURCE:
-		id = "ffmpeg_source";
-		break;
-	case	MONITOR_CAPTURE_SOURCE:
-		id = "monitor_capture";
-		break;
-	case	WINDOW_CAPTURE_SOURCE:
-		id = "window_capture";
-		break;
-	case	VIDEO_CAPTURE_SOURCE:
-		id = "dshow_input";
-		break;
-	case	AUDIO_INPUT_SOURCE:
-		id = "wasapi_input_capture";
-		break;
-	case	AUDIO_OUTPUT_SOURCE:
-		id = "wasapi_output_capture";
-		break;
-	default:
-		return false;
-	}
-	return true;
 }
 
 int GetDeviceVectorFromSourceType(int type)

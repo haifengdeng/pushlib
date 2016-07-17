@@ -9,6 +9,7 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <map>
 #include <util/threading.h>
 
 #define DESKTOP_AUDIO_1 Str("DesktopAudioDevice1")
@@ -30,6 +31,8 @@ class OBSBasicPreview;
 class BroardcastBase
 {
 public:
+	ConfigFile    basicConfig;
+
 	std::vector<OBSSignal> signalHandlers;
 
 	bool loaded = false;
@@ -114,8 +117,6 @@ public:
 	BroardcastBase();
 	~BroardcastBase();
 
-	ConfigFile    basicConfig;
-
 	void OBSInit();
 	obs_service_t *BroardcastBase::GetService();
 	void          SetService(obs_service_t *service);
@@ -140,7 +141,19 @@ public:
 	void StopStreaming();
 	void EnablePreviewDisplay(bool enable);
 
+	//set main preview window
 	void setRenderWindow(void* Window);
+
+	//source
+	int  addNewSource(const char* srcName, int type);
+	struct SourceInfo{
+		int             type;
+		obs_source_t    *source;
+		std::string     name;
+		obs_data_t      *setting;
+		obs_properties_t *properties;
+	};
+	std::map<obs_source_t *, struct SourceInfo>  sourceArray;
 };
 
 int GetProfilePath(char *path, size_t size, const char *file);

@@ -26,3 +26,4 @@ PUSH_ENGINE_EXPORT int BroardcastAddDefaultAVSoruce();
 
 PUSH_ENGINE_EXPORT int GetDeviceVectorFromSourceType(int type);
 PUSH_ENGINE_EXPORT void setRenderWindow(void* Window);
+PUSH_ENGINE_EXPORT int addNewSource(const char* srcName, InputSourceType type);
