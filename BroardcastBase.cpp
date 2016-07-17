@@ -928,6 +928,19 @@ void BroardcastBase::StopStreaming()
 	}
 }
 
+void BroardcastBase::StartRecording()
+{
+	if (outputHandler->RecordingActive())
+		return;
+	outputHandler->StartRecording();
+}
+void BroardcastBase::StopRecording()
+{
+
+	if (outputHandler->RecordingActive())
+		outputHandler->StopRecording();
+}
+
 config_t *BroardcastBase::Config() const
 {
 	return basicConfig;

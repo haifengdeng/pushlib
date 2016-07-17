@@ -19,6 +19,7 @@ using namespace std;
 struct AddSourceData {
 	obs_source_t *source;
 	bool visible;
+	obs_sceneitem_t  *item;//output
 };
 
 static void AddSource(void *_data, obs_scene_t *scene)
@@ -28,6 +29,7 @@ static void AddSource(void *_data, obs_scene_t *scene)
 
 	sceneitem = obs_scene_add(scene, data->source);
 	obs_sceneitem_set_visible(sceneitem, data->visible);
+	data->item = sceneitem;
 }
 
 int  BroardcastBase::addNewSource(const char* srcName, int type)
@@ -48,6 +50,7 @@ int  BroardcastBase::addNewSource(const char* srcName, int type)
 		AddSourceData data;
 		data.source = source;
 		data.visible = true;
+		data.item = NULL;
 		obs_scene_atomic_update(scene, AddSource, &data);
 		obs_source_release(source);
 
@@ -58,7 +61,7 @@ int  BroardcastBase::addNewSource(const char* srcName, int type)
 		info.properties = obs_source_properties(source);
 		info.source = source;
 		info.type = (int) type;
-
+		info.item = data.item;
 		sourceArray[source] = info;
 		return 0;
 	}
@@ -72,3 +75,86 @@ int addNewSource(const char* srcName, InputSourceType type)
 	return Engine_main()->addNewSource(srcName, type);
 }
 
+
+//logo
+std::string  BroardcastBase::getLogo()
+{
+	return logoPath;
+}
+
+int BroardcastBase::setLogo(const char *imageFilePath)
+{
+	string name = "logo_source";
+	addNewSource(name.c_str(), IMAGE_FILE_SOURCE);
+	obs_source_t * source = obs_get_source_by_name(name.c_str());
+
+	if (!source){
+		blog(LOG_ERROR, "can not create logo source.");
+		return -1;
+	}
+	logoPath = imageFilePath;
+	obs_data_t * settings = sourceArray[source].setting;
+	obs_data_set_string(settings, "file", imageFilePath);
+	obs_source_update(source, settings);
+}
+
+int BroardcastBase::setLogoGeometry(int x, int y, int width, int height)
+{
+	obs_source_t * source = obs_get_source_by_name(logoPath.c_str());
+	if (!source){
+		blog(LOG_ERROR, "can not find logo.");
+		return -1;
+	}
+	obs_sceneitem_t * item = sourceArray[source].item;
+	logo_geometry.x = x;
+	logo_geometry.y = y;
+	logo_geometry.width = width;
+	logo_geometry.height = height;
+	vec2 pos = { x, y };
+	obs_sceneitem_set_pos(item, &pos);
+	vec2 size = { width, height };
+	obs_sceneitem_set_bounds(item, &size);
+	return 0;
+}
+int BroardcastBase::getLogoGeometry(int& x, int& y, int& width, int& height)
+{
+	x = logo_geometry.x;
+	y = logo_geometry.y;
+	width = logo_geometry.width;
+	height = logo_geometry.height;
+	return 0;
+}
+int BroardcastBase::removeLogo()
+{
+	obs_source_t * source = obs_get_source_by_name(logoPath.c_str());
+	if (!source){
+		blog(LOG_ERROR, "can not find logo.");
+		return -1;
+	}
+	obs_sceneitem_t * item = sourceArray[source].item;
+	obs_sceneitem_remove(item);
+	obs_source_remove(source);
+	sourceArray.erase(source);
+}
+
+
+std::string getLogo()
+{
+	return Engine_main()->getLogo();
+}
+int setLogo(const char *imageFilePath)
+{
+	return Engine_main()->setLogo(imageFilePath);
+}
+int setLogoGeometry(int x, int y, int width, int height)
+{
+	return Engine_main()->getLogoGeometry(x, y, width, height);
+}
+int getLogoGeometry(int& x, int& y, int& width, int& height)
+{
+	return Engine_main()->getLogoGeometry(x, y, width, height);
+}
+int removeLogo()
+{
+	return Engine_main()->removeLogo();
+}

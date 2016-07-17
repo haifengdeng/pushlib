@@ -29,3 +29,9 @@ PUSH_ENGINE_EXPORT int startStreaming();
 PUSH_ENGINE_EXPORT int GetDeviceVectorFromSourceType(int type);
 PUSH_ENGINE_EXPORT void setRenderWindow(void* Window);
 PUSH_ENGINE_EXPORT int addNewSource(const char* srcName, InputSourceType type);
+
+PUSH_ENGINE_EXPORT std::string getLogo();
+PUSH_ENGINE_EXPORT int setLogo(const char *imageFilePath);
+PUSH_ENGINE_EXPORT int setLogoGeometry(int x, int y, int width, int height);
+PUSH_ENGINE_EXPORT int getLogoGeometry(int& x, int& y, int& width, int& height);
+PUSH_ENGINE_EXPORT int removeLogo();

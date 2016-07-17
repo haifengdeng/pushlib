@@ -27,6 +27,16 @@
 
 struct BasicOutputHandler;
 class OBSBasicPreview;
+struct Geometry
+{
+	int x;
+	int y;
+	int width;
+	int height;
+	Geometry(){
+		x = y = width = height = 0;
+	}
+};
 
 class BroardcastBase
 {
@@ -135,8 +145,6 @@ public:
 	bool GetPreviewerSize(int &width, int &height);
 	void DrawPreviewerSceneEditing();
 
-	void StartStreaming();
-	void StopStreaming();
 	void EnablePreviewDisplay(bool enable);
 
 	//set main preview window
@@ -150,14 +158,29 @@ public:
 		std::string     name;
 		obs_data_t      *setting;
 		obs_properties_t *properties;
+		obs_sceneitem_t  *item;
 	};
 	std::map<obs_source_t *, struct SourceInfo>  sourceArray;
 
+	//streaming & recording
+	void StartStreaming();
+	void StopStreaming();
+	void StartRecording();
+	void StopRecording();
 	//service 
 	obs_service_t * GetService();
 	void updateServiceSetting(std::string server_, std::string key_);
 	std::string server_name;
 	std::string key_name;
+
+	//logo
+	std::string     logoPath;
+	Geometry   logo_geometry;
+	std::string getLogo();
+	int setLogo(const char *imageFilePath);
+	int setLogoGeometry(int x, int y, int width, int height);
+	int getLogoGeometry(int& x, int& y, int& width, int& height);
+	int removeLogo();
 };
 
 int GetProfilePath(char *path, size_t size, const char *file);
