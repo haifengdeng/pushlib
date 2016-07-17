@@ -1044,56 +1044,6 @@ void BroardcastBase::OBSInit()
 	SetCurrentScene(scene, true);
 }
 
-int GetDeviceVectorFromSourceType(int type)
-{
-	if (type != WINDOW_CAPTURE_SOURCE &&
-		type != VIDEO_CAPTURE_SOURCE &&
-		type != AUDIO_INPUT_SOURCE &&
-		type != AUDIO_OUTPUT_SOURCE)
-		return false;
-	string id;
-	SourceTypeConvertString((InputSourceType)type, id);
-	string tempName = id + "tempName";
-	vector<string>  DeviceArray;
-	obs_source_t *source = obs_get_source_by_name(tempName.c_str());
-	if (!source){
-		source = obs_source_create(id.c_str(), tempName.c_str(), NULL, nullptr);
-		if (!source)
-			return false;
-	}
-	using properties_delete_t = decltype(&obs_properties_destroy);
-	using properties_t =
-		std::unique_ptr<obs_properties_t, properties_delete_t>;
-	properties_t  properties(nullptr, obs_properties_destroy);
-	properties.reset(obs_source_properties(source));
-
-	obs_property_t *property = obs_properties_first(properties.get());
-	bool hasNoProperties = !property;
-
-	while (property) {
-		const char        *name = obs_property_name(property);
-		obs_property_type type = obs_property_get_type(property);
-
-		if (!obs_property_visible(property))
-			goto End;
-
-		if (type == OBS_PROPERTY_LIST){
-			const char       *name = obs_property_name(property);
-			obs_combo_type   type = obs_property_list_type(property);
-			obs_combo_format format = obs_property_list_format(property);
-			size_t           count = obs_property_list_item_count(property);
-			for (int i = 0; i < count; i++){
-				const char *name_item = obs_property_list_item_name(property, i);
-				blog(LOG_INFO, "%s: %s %d/%d %s", id.c_str(), name, i, count, name_item);
-			}
-		}
-
-End:
-		obs_property_next(&property);
-	}
-	return true;
-}
-
 void setRenderWindow(void* Window)
 {
 	Engine_main()->setRenderWindow(Window);

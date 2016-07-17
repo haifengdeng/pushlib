@@ -176,6 +176,7 @@ std::string getLogo()
 {
 	return Engine_main()->getLogo();
 }
+
 int setLogo(const char *imageFilePath)
 {
 	return Engine_main()->setLogo(imageFilePath);
@@ -191,4 +192,125 @@ int getLogoGeometry(int& x, int& y, int& width, int& height)
 int removeLogo()
 {
 	return Engine_main()->removeLogo();
+}
+
+#define VIDEO_DEVICE_ID "video_device_id"
+
+std::string BroardcastBase::enumVideoDevices(const char * srcName, size_t idx)
+{
+	obs_source_t  * source = obs_get_source_by_name(srcName);
+	if (source){
+		blog(LOG_ERROR, "source %s has existed.", srcName);
+		obs_source_release(source);
+		return "";
+	}
+	obs_properties_t * properties = sourceArray[source].properties;
+	obs_property_t *property = obs_properties_first(properties);
+	bool hasNoProperties = !property;
+
+	while (property) {
+		const char        *name = obs_property_name(property);
+		obs_property_type type = obs_property_get_type(property);
+
+		if (!obs_property_visible(property))
+			goto End;
+
+		if (strcmp(VIDEO_DEVICE_ID, name) == 0 && type == OBS_PROPERTY_LIST){
+			const char       *name = obs_property_name(property);
+			obs_combo_type   type = obs_property_list_type(property);
+			obs_combo_format format = obs_property_list_format(property);
+			size_t           count = obs_property_list_item_count(property);
+			if (idx > count)
+				return "";
+			else
+				return obs_property_list_item_name(property, idx);
+		}
+	End:
+		obs_property_next(&property);
+	}
+	return "";
+}
+
+int BroardcastBase::setVideoDefault(const char *srcName)
+{
+	std::string device_id = enumVideoDevices(srcName, 0);
+	return setVideoDevice(srcName, device_id.c_str());
+}
+
+bool BroardcastBase::getVideoDefault(const char *srcName)
+{
+	std::string device_id = enumVideoDevices(srcName, 0);
+	if (device_id.empty())
+		return false;
+	else
+		return true;
+}
+
+int BroardcastBase::setVideoDevice(const char* srcName, const char *deviceName)
+{
+	obs_source_t  * source = obs_get_source_by_name(srcName);
+	if (source){
+		blog(LOG_ERROR, "source %s has existed.", srcName);
+		obs_source_release(source);
+		return -1;
+	}
+	obs_properties_t * properties = sourceArray[source].properties;
+	obs_data_t *settings = sourceArray[source].setting;
+
+	obs_property_t *property = obs_properties_first(properties);
+	bool hasNoProperties = !property;
+
+	while (property) {
+		const char        *name = obs_property_name(property);
+		obs_property_type type = obs_property_get_type(property);
+
+		if (!obs_property_visible(property))
+			goto End;
+
+		if (strcmp(VIDEO_DEVICE_ID, name) == 0 && type == OBS_PROPERTY_LIST){
+			const char       *name = obs_property_name(property);
+			obs_combo_type   type = obs_property_list_type(property);
+			obs_combo_format format = obs_property_list_format(property);
+			size_t           count = obs_property_list_item_count(property);
+			obs_data_set_string(settings,VIDEO_DEVICE_ID, srcName);
+			obs_property_modified(property, settings);
+			return 0;
+		}
+	End:
+		obs_property_next(&property);
+	}
+	return -1;
+}
+
+std::string BroardcastBase::getVideoDevice(const char* srcName)
+{
+	obs_source_t  * source = obs_get_source_by_name(srcName);
+	if (source){
+		blog(LOG_ERROR, "source %s has existed.", srcName);
+		obs_source_release(source);
+		return "";
+	}
+	obs_data_t * settings = sourceArray[source].setting;
+	return obs_data_get_string(settings, VIDEO_DEVICE_ID);
+}
+
+std::string enumVideoDevices(const char *srcName, size_t idx)
+{
+	return Engine_main()->enumVideoDevices(srcName, idx);
+}
+int setVideoDefault(const char *srcName)
+{
+	return Engine_main()->setVideoDefault(srcName);
+}
+bool getVideoDefault(const char *srcName)
+{
+	return Engine_main()->getVideoDefault(srcName);
+}
+int setVideoDevice(const char* srcName, const char *deviceName)
+{
+	return Engine_main()->setVideoDevice(srcName, deviceName);
+}
+std::string getVideoDevice(const char* srcName)
+{
+	return Engine_main()->getVideoDevice(srcName);
 }

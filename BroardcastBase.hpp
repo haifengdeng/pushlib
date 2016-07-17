@@ -183,6 +183,13 @@ public:
 	int setLogoGeometry(int x, int y, int width, int height);
 	int getLogoGeometry(int& x, int& y, int& width, int& height);
 	int removeLogo();
+
+	//video
+	std::string  enumVideoDevices(const char * srcName, size_t idx);
+	int          setVideoDefault(const char *srcName);
+	bool         getVideoDefault(const char *srcName);
+	int          setVideoDevice(const char* srcName, const char *deviceName);
+	std::string  getVideoDevice(const char* srcName);
 };
 
 int GetProfilePath(char *path, size_t size, const char *file);
