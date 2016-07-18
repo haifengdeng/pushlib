@@ -149,6 +149,7 @@ public:
 
 	//set main preview window
 	void setRenderWindow(void* Window);
+	void ResizePreview(uint32_t cx, uint32_t cy);
 
 	//source
 	int  addNewSource(const char* srcName, int type);

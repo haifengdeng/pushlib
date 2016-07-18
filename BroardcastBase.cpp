@@ -989,6 +989,46 @@ void BroardcastBase::EnablePreviewDisplay(bool enable)
 	obs_display_set_enabled(previewer->GetDisplay(), enable);
 }
 
+static inline void GetScaleAndCenterPos(
+	int baseCX, int baseCY, int windowCX, int windowCY,
+	int &x, int &y, float &scale)
+{
+	double windowAspect, baseAspect;
+	int newCX, newCY;
+
+	windowAspect = double(windowCX) / double(windowCY);
+	baseAspect = double(baseCX) / double(baseCY);
+
+	if (windowAspect > baseAspect) {
+		scale = float(windowCY) / float(baseCY);
+		newCX = int(double(windowCY) * baseAspect);
+		newCY = windowCY;
+	}
+	else {
+		scale = float(windowCX) / float(baseCX);
+		newCX = windowCX;
+		newCY = int(float(windowCX) / baseAspect);
+	}
+
+	x = windowCX / 2 - newCX / 2;
+	y = windowCY / 2 - newCY / 2;
+}
+
+void BroardcastBase::ResizePreview(uint32_t cx, uint32_t cy)
+{
+	int width = 0, height = 0;
+
+	/* resize preview panel to fix to the top section of the window */
+	GetPreviewerSize(width, height);
+	GetScaleAndCenterPos(int(cx), int(cy),
+		width - PREVIEW_EDGE_SIZE * 2,
+		height - PREVIEW_EDGE_SIZE * 2,
+		previewX, previewY, previewScale);
+
+	previewX += float(PREVIEW_EDGE_SIZE);
+	previewY += float(PREVIEW_EDGE_SIZE);
+}
+
 void BroardcastBase::setRenderWindow(void* Window)
 {
 	if (previewer)
@@ -999,8 +1039,7 @@ void BroardcastBase::setRenderWindow(void* Window)
 
 	struct obs_video_info ovi;
 	if (obs_get_video_info(&ovi)){
-		//TODO;
-		//ResizePreview(ovi.base_width, ovi.base_height);
+		ResizePreview(ovi.base_width, ovi.base_height);
 	}
 	EnablePreviewDisplay(true);
 }
