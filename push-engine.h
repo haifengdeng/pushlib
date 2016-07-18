@@ -24,6 +24,7 @@ PUSH_ENGINE_EXPORT int BroardcastEngine_Init();
 
 PUSH_ENGINE_EXPORT int stopStreaming();
 PUSH_ENGINE_EXPORT int startStreaming();
+PUSH_ENGINE_EXPORT int startRecording();
 
 PUSH_ENGINE_EXPORT void setRenderWindow(void* Window);
 PUSH_ENGINE_EXPORT int addNewSource(const char* srcName, InputSourceType type);

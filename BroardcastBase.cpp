@@ -1065,3 +1065,9 @@ int stopStreaming()
 	Engine_main()->StopStreaming();
 	return 0;
 }
+
+int startRecording()
+{
+	Engine_main()->StartRecording();
+	return 0;
+}

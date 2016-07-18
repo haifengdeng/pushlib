@@ -299,9 +299,17 @@ int BroardcastBase::setVideoDevice(const char* srcName, const char *deviceName)
 			obs_combo_type   type = obs_property_list_type(property);
 			obs_combo_format format = obs_property_list_format(property);
 			size_t           count = obs_property_list_item_count(property);
-			obs_data_set_string(settings,VIDEO_DEVICE_ID, srcName);
-			obs_property_modified(property, settings);
-			return 0;
+			for (int i = 0; i < count; i++){
+				string devname=obs_property_list_item_name(property, i);
+				if (strcmp(devname.c_str(), deviceName) == 0){
+					string devId = obs_property_list_item_string(property, i);
+					obs_data_set_string(settings, VIDEO_DEVICE_ID, devId.c_str());
+					obs_property_modified(property, settings);
+					obs_source_update(source, settings);
+					return 0;
+				}
+			}
+			return -1;
 		}
 	End:
 		obs_property_next(&property);
