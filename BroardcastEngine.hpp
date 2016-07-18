@@ -29,13 +29,8 @@ class BroardcastEngine
 {
 private:
 	std::string                    locale;
-	std::string		       theme;
 	TextLookup                     textLookup;
 	OBSContext                     obsContext;
-	profiler_name_store_t          *profilerNameStore = nullptr;
-
-	os_inhibit_t                   *sleepInhibitor = nullptr;
-	int                            sleepInhibitRefs = 0;
 
 	ConfigFile                     globalConfig;
 	BroardcastBase *               bcBase = nullptr;
@@ -46,7 +41,7 @@ private:
 	bool InitGlobalConfig();
 	bool InitLocale();
 public:
-	BroardcastEngine(profiler_name_store_t *store);
+	BroardcastEngine();
 	~BroardcastEngine();
 
 	void EngineInit();
@@ -64,11 +59,6 @@ public:
 		return textLookup.GetString(lookupVal);
 	}
 
-	profiler_name_store_t *GetProfilerNameStore() const
-	{
-		return profilerNameStore;
-	}
-
 	static BroardcastEngine *instance();
 	config_t * mainConfig(){ return bcBase->Config(); }
 	inline config_t *GlobalConfig() const { return globalConfig; }
@@ -78,23 +68,8 @@ public:
 	const char *InputAudioSource() const;
 	const char *OutputAudioSource() const;
 
-	const char *GetLastLog() const;
 	const char *GetCurrentLog() const;
 
-	inline void IncrementSleepInhibition()
-	{
-		if (!sleepInhibitor) return;
-		if (sleepInhibitRefs++ == 0)
-			os_inhibit_sleep_set_active(sleepInhibitor, true);
-	}
-
-	inline void DecrementSleepInhibition()
-	{
-		if (!sleepInhibitor) return;
-		if (sleepInhibitRefs == 0) return;
-		if (--sleepInhibitRefs == 0)
-			os_inhibit_sleep_set_active(sleepInhibitor, false);
-	}
 };
 
 int GetConfigPath(char *path, size_t size, const char *name);

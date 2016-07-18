@@ -19,16 +19,10 @@
 #include "platform.hpp"
 #include <fstream>
 #include <curl/curl.h>
-
-#ifdef _WIN32
+#include "push-engine.h"
 #include <windows.h>
-#else
-#include <signal.h>
-#endif
 
 using namespace std;
-
-static log_handler_t def_log_handler;
 
 static string currentLogFile;
 static string lastLogFile;
@@ -231,12 +225,6 @@ bool BroardcastEngine::InitGlobalConfigDefaults()
 		"ShowListboxToolbars", true);
 	config_set_default_bool(globalConfig, "BasicWindow",
 		"ShowStatusBar", true);
-
-#ifdef __APPLE__
-	config_set_default_bool(globalConfig, "Video", "DisableOSXVSync", true);
-	config_set_default_bool(globalConfig, "Video", "ResetOSXVSyncOnExit",
-		true);
-#endif
 	return true;
 }
 
@@ -264,17 +252,6 @@ static bool MakeUserDirs()
 	if (!do_mkdir(path))
 		return false;
 
-	if (GetConfigPath(path, sizeof(path), "obs-studio/profiler_data") <= 0)
-		return false;
-	if (!do_mkdir(path))
-		return false;
-
-#ifdef _WIN32
-	if (GetConfigPath(path, sizeof(path), "obs-studio/crashes") <= 0)
-		return false;
-	if (!do_mkdir(path))
-		return false;
-#endif
 	if (GetConfigPath(path, sizeof(path), "obs-studio/plugin_config") <= 0)
 		return false;
 	if (!do_mkdir(path))
@@ -436,7 +413,6 @@ bool BroardcastEngine::InitGlobalConfig()
 
 bool BroardcastEngine::InitLocale()
 {
-	ProfileScope("OBSApp::InitLocale");
 	const char *lang = config_get_string(globalConfig, "General",
 		"Language");
 
@@ -512,25 +488,14 @@ BroardcastEngine* BroardcastEngine::instance()
 	return self;
 }
 
-BroardcastEngine::BroardcastEngine(profiler_name_store_t *store)
-	: profilerNameStore(store)
+BroardcastEngine::BroardcastEngine()
 {
-	sleepInhibitor = os_inhibit_sleep_create("OBS Video/audio");
+
 }
 
 BroardcastEngine::~BroardcastEngine()
 {
-#ifdef __APPLE__
-	bool vsyncDiabled = config_get_bool(globalConfig, "Video",
-		"DisableOSXVSync");
-	bool resetVSync = config_get_bool(globalConfig, "Video",
-		"ResetOSXVSyncOnExit");
-	if (vsyncDiabled && resetVSync)
-		EnableOSXVSync(true);
-#endif
 
-	os_inhibit_sleep_set_active(sleepInhibitor, false);
-	os_inhibit_sleep_destroy(sleepInhibitor);
 }
 
 static void move_basic_to_profiles(void)
@@ -616,7 +581,6 @@ static void move_basic_to_scene_collections(void)
 
 void BroardcastEngine::EngineInit()
 {
-	ProfileScope("OBSApp::AppInit");
 
 	if (!InitApplicationBundle())
 		throw "Failed to initialize application bundle";
@@ -636,10 +600,6 @@ void BroardcastEngine::EngineInit()
 	config_set_default_string(globalConfig, "Basic", "SceneCollectionFile",
 		Str("Untitled"));
 
-#ifdef __APPLE__
-	if (config_get_bool(globalConfig, "Video", "DisableOSXVSync"))
-		EnableOSXVSync(false);
-#endif
 
 	move_basic_to_profiles();
 	move_basic_to_scene_collections();
@@ -657,21 +617,19 @@ const char *BroardcastEngine::GetRenderModule() const
 	DL_D3D11 : DL_OPENGL;
 }
 
-static bool StartupOBS(const char *locale, profiler_name_store_t *store)
+static bool StartupOBS(const char *locale)
 {
 	char path[512];
 
 	if (GetConfigPath(path, sizeof(path), "obs-studio/plugin_config") <= 0)
 		return false;
 
-	return obs_startup(locale, path, store);
+	return obs_startup(locale, path, NULL);
 }
 
 bool BroardcastEngine::OBSInit()
 {
-	ProfileScope("OBSApp::OBSInit");
-
-	if (!StartupOBS(locale.c_str(), GetProfilerNameStore()))
+	if (!StartupOBS(locale.c_str()))
 		return false;
 
 	bcBase = new BroardcastBase();
@@ -679,36 +637,6 @@ bool BroardcastEngine::OBSInit()
 	bcBase->OBSInit();
 
 	return true;
-}
-
-string BroardcastEngine::GetVersionString() const
-{
-	stringstream ver;
-
-#ifdef HAVE_OBSCONFIG_H
-	ver << OBS_VERSION;
-#else
-	ver << LIBOBS_API_MAJOR_VER << "." <<
-		LIBOBS_API_MINOR_VER << "." <<
-		LIBOBS_API_PATCH_VER;
-
-#endif
-	ver << " (";
-
-#ifdef _WIN32
-	if (sizeof(void*) == 8)
-		ver << "64bit, ";
-
-	ver << "windows)";
-#elif __APPLE__
-	ver << "mac)";
-#elif __FreeBSD__
-	ver << "freebsd)";
-#else /* assume linux for the time being */
-	ver << "linux)";
-#endif
-
-	return ver.str();
 }
 
 #ifdef __APPLE__
@@ -732,125 +660,10 @@ const char *BroardcastEngine::OutputAudioSource() const
 	return OUTPUT_AUDIO_SOURCE;
 }
 
-const char *BroardcastEngine::GetLastLog() const
-{
-	return lastLogFile.c_str();
-}
 
 const char *BroardcastEngine::GetCurrentLog() const
 {
 	return currentLogFile.c_str();
-}
-
-static bool get_token(lexer *lex, string &str, base_token_type type)
-{
-	base_token token;
-	if (!lexer_getbasetoken(lex, &token, IGNORE_WHITESPACE))
-		return false;
-	if (token.type != type)
-		return false;
-
-	str.assign(token.text.array, token.text.len);
-	return true;
-}
-
-static bool expect_token(lexer *lex, const char *str, base_token_type type)
-{
-	base_token token;
-	if (!lexer_getbasetoken(lex, &token, IGNORE_WHITESPACE))
-		return false;
-	if (token.type != type)
-		return false;
-
-	return strref_cmp(&token.text, str) == 0;
-}
-
-static uint64_t convert_log_name(const char *name)
-{
-	BaseLexer  lex;
-	string     year, month, day, hour, minute, second;
-
-	lexer_start(lex, name);
-
-	if (!get_token(lex, year, BASETOKEN_DIGIT)) return 0;
-	if (!expect_token(lex, "-", BASETOKEN_OTHER)) return 0;
-	if (!get_token(lex, month, BASETOKEN_DIGIT)) return 0;
-	if (!expect_token(lex, "-", BASETOKEN_OTHER)) return 0;
-	if (!get_token(lex, day, BASETOKEN_DIGIT)) return 0;
-	if (!get_token(lex, hour, BASETOKEN_DIGIT)) return 0;
-	if (!expect_token(lex, "-", BASETOKEN_OTHER)) return 0;
-	if (!get_token(lex, minute, BASETOKEN_DIGIT)) return 0;
-	if (!expect_token(lex, "-", BASETOKEN_OTHER)) return 0;
-	if (!get_token(lex, second, BASETOKEN_DIGIT)) return 0;
-
-	stringstream timestring;
-	timestring << year << month << day << hour << minute << second;
-	return std::stoull(timestring.str());
-}
-
-static void delete_oldest_file(const char *location)
-{
-	BPtr<char>       logDir(GetConfigPathPtr(location));
-	string           oldestLog;
-	uint64_t         oldest_ts = (uint64_t)-1;
-	struct os_dirent *entry;
-
-	unsigned int maxLogs = (unsigned int)config_get_uint(
-		Engine()->GlobalConfig(), "General", "MaxLogs");
-
-	os_dir_t *dir = os_opendir(logDir);
-	if (dir) {
-		unsigned int count = 0;
-
-		while ((entry = os_readdir(dir)) != NULL) {
-			if (entry->directory || *entry->d_name == '.')
-				continue;
-
-			uint64_t ts = convert_log_name(entry->d_name);
-
-			if (ts) {
-				if (ts < oldest_ts) {
-					oldestLog = entry->d_name;
-					oldest_ts = ts;
-				}
-
-				count++;
-			}
-		}
-
-		os_closedir(dir);
-
-		if (count > maxLogs) {
-			stringstream delPath;
-
-			delPath << logDir << "/" << oldestLog;
-			os_unlink(delPath.str().c_str());
-		}
-	}
-}
-
-static void get_last_log(void)
-{
-	BPtr<char>       logDir(GetConfigPathPtr("obs-studio/logs"));
-	struct os_dirent *entry;
-	os_dir_t         *dir = os_opendir(logDir);
-	uint64_t         highest_ts = 0;
-
-	if (dir) {
-		while ((entry = os_readdir(dir)) != NULL) {
-			if (entry->directory || *entry->d_name == '.')
-				continue;
-
-			uint64_t ts = convert_log_name(entry->d_name);
-
-			if (ts > highest_ts) {
-				lastLogFile = entry->d_name;
-				highest_ts = ts;
-			}
-		}
-
-		os_closedir(dir);
-	}
 }
 
 string GenerateTimeDateFilename(const char *extension, bool noSpace)
@@ -978,8 +791,6 @@ static void create_log_file(fstream &logFile)
 {
 	stringstream dst;
 
-	get_last_log();
-
 	currentLogFile = GenerateTimeDateFilename("txt");
 	dst << "obs-studio/logs/" << currentLogFile.c_str();
 
@@ -988,7 +799,6 @@ static void create_log_file(fstream &logFile)
 		ios_base::in | ios_base::out | ios_base::trunc);
 
 	if (logFile.is_open()) {
-		delete_oldest_file("obs-studio/logs");
 		base_set_log_handler(do_log, &logFile);
 	}
 	else {
@@ -996,108 +806,18 @@ static void create_log_file(fstream &logFile)
 	}
 }
 
-static auto ProfilerNameStoreRelease = [](profiler_name_store_t *store)
-{
-	profiler_name_store_free(store);
-};
-
-using ProfilerNameStore =
-std::unique_ptr<profiler_name_store_t,
-decltype(ProfilerNameStoreRelease)>;
-
-ProfilerNameStore CreateNameStore()
-{
-	return ProfilerNameStore{ profiler_name_store_create(),
-		ProfilerNameStoreRelease };
-}
-
-static auto SnapshotRelease = [](profiler_snapshot_t *snap)
-{
-	profile_snapshot_free(snap);
-};
-
-using ProfilerSnapshot =
-std::unique_ptr<profiler_snapshot_t, decltype(SnapshotRelease)>;
-
-ProfilerSnapshot GetSnapshot()
-{
-	return ProfilerSnapshot{ profile_snapshot_create(), SnapshotRelease };
-}
-
-static void SaveProfilerData(const ProfilerSnapshot &snap)
-{
-	if (currentLogFile.empty())
-		return;
-
-	auto pos = currentLogFile.rfind('.');
-	if (pos == currentLogFile.npos)
-		return;
-
-#define LITERAL_SIZE(x) x, (sizeof(x) - 1)
-	ostringstream dst;
-	dst.write(LITERAL_SIZE("obs-studio/profiler_data/"));
-	dst.write(currentLogFile.c_str(), pos);
-	dst.write(LITERAL_SIZE(".csv.gz"));
-#undef LITERAL_SIZE
-
-	BPtr<char> path = GetConfigPathPtr(dst.str().c_str());
-	if (!profiler_snapshot_dump_csv_gz(snap.get(), path))
-		blog(LOG_WARNING, "Could not save profiler data to '%s'",
-		static_cast<const char*>(path));
-}
-
-static auto ProfilerFree = [](void *)
-{
-	profiler_stop();
-
-	auto snap = GetSnapshot();
-
-	profiler_print(snap.get());
-	profiler_print_time_between_calls(snap.get());
-
-	SaveProfilerData(snap);
-
-	profiler_free();
-};
-
-static const char *run_program_init = "run_program_init";
-static int run_program()
+static int start_engine()
 {
 	int ret = -1;
-
-	static auto profilerNameStore = CreateNameStore();
 	static fstream logFile;
 
-	profiler_start();
-	profile_register_root(run_program_init, 0);
-
-	auto PrintInitProfile = [&]()
-	{
-		auto snap = GetSnapshot();
-
-		profiler_snapshot_filter_roots(snap.get(), [](void *data,
-			const char *name, bool *remove)
-		{
-			*remove = (*static_cast<const char**>(data)) != name;
-			return true;
-		}, static_cast<void*>(&run_program_init));
-
-		profiler_print(snap.get());
-	};
-
-	ScopeProfiler prof{ run_program_init };
-
-	self = new BroardcastEngine(profilerNameStore.get());
+	self = new BroardcastEngine();
 	try {
 		self->EngineInit();
 		create_log_file(logFile);
-		delete_oldest_file("obs-studio/profiler_data");
 
 		if (!self->OBSInit())
 			return 0;
-
-		prof.Stop();
-		PrintInitProfile();
 
 		return 1;
 	}
@@ -1108,79 +828,6 @@ static int run_program()
 	return ret;
 }
 
-#define MAX_CRASH_REPORT_SIZE (50 * 1024)
-
-#ifdef _WIN32
-
-#define CRASH_MESSAGE \
-	"Woops, OBS has crashed!\n\nWould you like to copy the crash log " \
-	"to the clipboard?  (Crash logs will still be saved to the " \
-	"%appdata%\\obs-studio\\crashes directory)"
-
-static void main_crash_handler(const char *format, va_list args, void *param)
-{
-	char *text = new char[MAX_CRASH_REPORT_SIZE];
-
-	vsnprintf(text, MAX_CRASH_REPORT_SIZE, format, args);
-	text[MAX_CRASH_REPORT_SIZE - 1] = 0;
-
-	delete_oldest_file("obs-studio/crashes");
-
-	string name = "obs-studio/crashes/Crash ";
-	name += GenerateTimeDateFilename("txt");
-
-	BPtr<char> path(GetConfigPathPtr(name.c_str()));
-
-	fstream file;
-	file.open(path, ios_base::in | ios_base::out | ios_base::trunc |
-		ios_base::binary);
-	file << text;
-	file.close();
-
-	int ret = MessageBoxA(NULL, CRASH_MESSAGE, "OBS has crashed!",
-		MB_YESNO | MB_ICONERROR | MB_TASKMODAL);
-
-	if (ret == IDYES) {
-		size_t len = strlen(text);
-
-		HGLOBAL mem = GlobalAlloc(GMEM_MOVEABLE, len);
-		memcpy(GlobalLock(mem), text, len);
-		GlobalUnlock(mem);
-
-		OpenClipboard(0);
-		EmptyClipboard();
-		SetClipboardData(CF_TEXT, mem);
-		CloseClipboard();
-	}
-
-	exit(-1);
-
-	UNUSED_PARAMETER(param);
-}
-
-static void load_debug_privilege(void)
-{
-	const DWORD flags = TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY;
-	TOKEN_PRIVILEGES tp;
-	HANDLE token;
-	LUID val;
-
-	if (!OpenProcessToken(GetCurrentProcess(), flags, &token)) {
-		return;
-	}
-
-	if (!!LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &val)) {
-		tp.PrivilegeCount = 1;
-		tp.Privileges[0].Luid = val;
-		tp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
-
-		AdjustTokenPrivileges(token, false, &tp,
-			sizeof(tp), NULL, NULL);
-	}
-
-	CloseHandle(token);
-}
-#endif
 
 #ifdef __APPLE__
 #define BASE_PATH ".."
@@ -1312,46 +959,6 @@ bool WindowPositionValid(int x, int y)
 
 	return false;
 }
-
-static inline bool arg_is(const char *arg,
-	const char *long_form, const char *short_form)
-{
-	return (long_form  && strcmp(arg, long_form) == 0) ||
-		(short_form && strcmp(arg, short_form) == 0);
-}
-
-#if !defined(_WIN32) && !defined(__APPLE__)
-#define IS_UNIX 1
-#endif
-
-/* if using XDG and was previously using an older build of OBS, move config
-* files to XDG directory */
-#if defined(USE_XDG) && defined(IS_UNIX)
-static void move_to_xdg(void)
-{
-	char old_path[512];
-	char new_path[512];
-	char *home = getenv("HOME");
-	if (!home)
-		return;
-
-	if (snprintf(old_path, 512, "%s/.obs-studio", home) <= 0)
-		return;
-
-	/* make base xdg path if it doesn't already exist */
-	if (GetConfigPath(new_path, 512, "") <= 0)
-		return;
-	if (os_mkdirs(new_path) == MKDIR_ERROR)
-		return;
-
-	if (GetConfigPath(new_path, 512, "obs-studio") <= 0)
-		return;
-
-	if (os_file_exists(old_path) && !os_file_exists(new_path)) {
-		rename(old_path, new_path);
-	}
-}
-#endif
 
 static bool update_ffmpeg_output(ConfigFile &config)
 {
@@ -1485,94 +1092,10 @@ static void convert_14_2_encoder_setting(const char *encoder, const char *file)
 	obs_data_release(data);
 }
 
-static void upgrade_settings(void)
-{
-	char path[512];
-	int pathlen = GetConfigPath(path, 512, "obs-studio/basic/profiles");
-
-	if (pathlen <= 0)
-		return;
-	if (!os_file_exists(path))
-		return;
-
-	os_dir_t *dir = os_opendir(path);
-	if (!dir)
-		return;
-
-	struct os_dirent *ent = os_readdir(dir);
-
-	while (ent) {
-		if (ent->directory && strcmp(ent->d_name, ".") != 0 &&
-			strcmp(ent->d_name, "..") != 0) {
-			strcat(path, "/");
-			strcat(path, ent->d_name);
-			strcat(path, "/basic.ini");
-
-			ConfigFile config;
-			int ret;
-
-			ret = config.Open(path, CONFIG_OPEN_EXISTING);
-			if (ret == CONFIG_SUCCESS) {
-				if (update_ffmpeg_output(config) ||
-					update_reconnect(config)) {
-					config_save_safe(config, "tmp",
-						nullptr);
-				}
-			}
-
-
-			if (config) {
-				const char *sEnc = config_get_string(config,
-					"AdvOut", "Encoder");
-				const char *rEnc = config_get_string(config,
-					"AdvOut", "RecEncoder");
-
-				/* replace "cbr" option with "rate_control" for
-				* each profile's encoder data */
-				path[pathlen] = 0;
-				strcat(path, "/");
-				strcat(path, ent->d_name);
-				strcat(path, "/recordEncoder.json");
-				convert_14_2_encoder_setting(rEnc, path);
-
-				path[pathlen] = 0;
-				strcat(path, "/");
-				strcat(path, ent->d_name);
-				strcat(path, "/streamEncoder.json");
-				convert_14_2_encoder_setting(sEnc, path);
-			}
-
-			path[pathlen] = 0;
-		}
-
-		ent = os_readdir(dir);
-	}
-
-	os_closedir(dir);
-}
-
-#include "push-engine.h"
 int BroardcastEngine_Init()
 {
-#ifndef _WIN32
-	signal(SIGPIPE, SIG_IGN);
-#endif
-
-#ifdef _WIN32
-	load_debug_privilege();
-	base_set_crash_handler(main_crash_handler, nullptr);
-#endif
-
-	base_get_log_handler(&def_log_handler, nullptr);
-
-#if defined(USE_XDG) && defined(IS_UNIX)
-	move_to_xdg();
-#endif
-
-	//upgrade_settings();
-
 	curl_global_init(CURL_GLOBAL_ALL);
-	int ret = run_program();
+	int ret = start_engine();
 	return ret;
 }
 
