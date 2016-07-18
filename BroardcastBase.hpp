@@ -141,7 +141,7 @@ public:
 
 	config_t *     Config() const;
 	OBSScene GetCurrentScene();
-	int devicePixelRatio();
+	float devicePixelRatio();
 	bool GetPreviewerSize(int &width, int &height);
 	void DrawPreviewerSceneEditing();
 

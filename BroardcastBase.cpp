@@ -961,9 +961,9 @@ OBSScene BroardcastBase::GetCurrentScene()
 	return scene;
 }
 
-int BroardcastBase::devicePixelRatio()
+float BroardcastBase::devicePixelRatio()
 {
-	return 1;
+	return 1.0;
 }
 
 void BroardcastBase::ResetOutputs()
