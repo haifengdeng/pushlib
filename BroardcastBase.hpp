@@ -170,6 +170,7 @@ public:
 	void StopStreaming();
 	void StartRecording();
 	void StopRecording();
+
 	//service 
 	obs_service_t * GetService();
 	void updateServiceSetting(std::string server_, std::string key_);

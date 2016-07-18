@@ -138,7 +138,8 @@ int BroardcastBase::setLogo(const char *imageFilePath)
 
 int BroardcastBase::setLogoGeometry(int x, int y, int width, int height)
 {
-	obs_source_t * source = obs_get_source_by_name(logoPath.c_str());
+	string name = "logo_source";
+	obs_source_t * source = obs_get_source_by_name(name.c_str());
 	if (!source){
 		blog(LOG_ERROR, "can not find logo.");
 		return -1;
@@ -152,7 +153,18 @@ int BroardcastBase::setLogoGeometry(int x, int y, int width, int height)
 	vec2 pos = { x, y };
 	obs_sceneitem_set_pos(item, &pos);
 	vec2 size = { width, height };
-	obs_sceneitem_set_bounds(item, &size);
+
+	obs_bounds_type boundsType = obs_sceneitem_get_bounds_type(item);
+	if (boundsType != OBS_BOUNDS_NONE) {
+		obs_sceneitem_set_bounds(item, &size);
+	}
+	else {
+		int base_width = obs_source_get_width(source);
+		int base_height = obs_source_get_height(source);
+		size.x = width / float(base_width);
+		size.y = height / float(base_height);
+		obs_sceneitem_set_scale(item, &size);
+	}
 	return 0;
 }
 int BroardcastBase::getLogoGeometry(int& x, int& y, int& width, int& height)
@@ -165,7 +177,8 @@ int BroardcastBase::getLogoGeometry(int& x, int& y, int& width, int& height)
 }
 int BroardcastBase::removeLogo()
 {
-	obs_source_t * source = obs_get_source_by_name(logoPath.c_str());
+	string name = "logo_source";
+	obs_source_t * source = obs_get_source_by_name(name.c_str());
 	if (!source){
 		blog(LOG_ERROR, "can not find logo.");
 		return -1;
@@ -189,7 +202,7 @@ int setLogo(const char *imageFilePath)
 }
 int setLogoGeometry(int x, int y, int width, int height)
 {
-	return Engine_main()->getLogoGeometry(x, y, width, height);
+	return Engine_main()->setLogoGeometry(x, y, width, height);
 }
 int getLogoGeometry(int& x, int& y, int& width, int& height)
 {
