@@ -259,7 +259,7 @@ std::string BroardcastBase::enumVideoDevices(const char * srcName, size_t idx)
 			obs_combo_type   type = obs_property_list_type(property);
 			obs_combo_format format = obs_property_list_format(property);
 			size_t           count = obs_property_list_item_count(property);
-			if (idx > count)
+			if (idx >= count)
 				return "";
 			else
 				return obs_property_list_item_name(property, idx);
@@ -427,7 +427,7 @@ std::string BroardcastBase::enumResolutions(const char* srcName, size_t idx)
 		if (strcmp(RESOLUTION, name) == 0 && type == OBS_PROPERTY_EDITABLE_LIST){
 			obs_combo_format format = obs_property_list_format(property);
 			size_t           count = obs_property_list_item_count(property);
-			if (idx > count)
+			if (idx >= count)
 				return "";
 			else
 				return obs_property_list_item_name(property, idx);
@@ -513,7 +513,7 @@ int BroardcastBase::enumFPSs(const char* srcName, size_t idx)
 		if (strcmp(FRAME_INTERVAL, name) == 0 && type == OBS_COMBO_TYPE_LIST){
 			obs_combo_format format = obs_property_list_format(property);
 			size_t           count = obs_property_list_item_count(property);
-			if (idx > count)
+			if (idx >= count)
 				return -1;
 			else
 				return obs_property_list_item_int(property, idx);
@@ -599,7 +599,7 @@ int BroardcastBase::enumVideoFormats(const char* srcName, size_t idx)
 		if (strcmp(VIDEO_FORMAT, name) == 0 && type == OBS_COMBO_TYPE_LIST){
 			obs_combo_format format = obs_property_list_format(property);
 			size_t           count = obs_property_list_item_count(property);
-			if (idx > count)
+			if (idx >= count)
 				return -1;
 			else
 				return obs_property_list_item_int(property, idx);
@@ -683,7 +683,7 @@ std::string BroardcastBase::enumColorSpaces(const char* srcName, size_t idx)
 		if (strcmp(COLOR_SPACE, name) == 0 && type == OBS_COMBO_TYPE_LIST){
 			obs_combo_format format = obs_property_list_format(property);
 			size_t           count = obs_property_list_item_count(property);
-			if (idx > count)
+			if (idx >= count)
 				return "";
 			else
 				return obs_property_list_item_name(property, idx);
@@ -767,7 +767,7 @@ std::string BroardcastBase::enumColorRanges(const char* srcName, size_t idx)
 		if (strcmp(COLOR_RANGE, name) == 0 && type == OBS_COMBO_TYPE_LIST){
 			obs_combo_format format = obs_property_list_format(property);
 			size_t           count = obs_property_list_item_count(property);
-			if (idx > count)
+			if (idx >= count)
 				return "";
 			else
 				return obs_property_list_item_name(property, idx);
@@ -926,7 +926,7 @@ std::string BroardcastBase::enumAudioInDevices(const char* srcName, size_t idx)
 		if (strcmp(OPT_DEVICE_ID, name) == 0 && type == OBS_COMBO_TYPE_LIST){
 			obs_combo_format format = obs_property_list_format(property);
 			size_t           count = obs_property_list_item_count(property);
-			if (idx > count)
+			if (idx >= count)
 				return "";
 			else
 				return obs_property_list_item_name(property, idx);
