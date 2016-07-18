@@ -25,6 +25,19 @@ OBSBasicPreview::OBSBasicPreview(void * hwnd)
 
 }
 
+vec2 OBSBasicPreview::GetMouseEventPos(CCMouseEvent *event)
+{
+	BroardcastBase *main = Engine_main();
+	float pixelRatio = main->devicePixelRatio();
+	float scale = pixelRatio / main->previewScale;
+	vec2 pos;
+	vec2_set(&pos,
+		(float(event->x) - main->previewX / pixelRatio) * scale,
+		(float(event->y) - main->previewY / pixelRatio) * scale);
+
+	return pos;
+}
+
 struct SceneFindData {
 	const vec2   &pos;
 	OBSSceneItem item;
@@ -366,6 +379,35 @@ void OBSBasicPreview::GetStretchHandleData(const vec2 &pos)
 	}
 }
 
+void OBSBasicPreview::mousePressEvent(CCMouseEvent *event)
+{
+	BroardcastBase *main = Engine_main();
+	float pixelRatio = main->devicePixelRatio();
+	float x = float(event->x) - main->previewX / pixelRatio;
+	float y = float(event->y) - main->previewY / pixelRatio;
+	KeyboardModifier modifiers = keyboardModifiers();
+	bool altDown = (modifiers & AltModifier);
+
+	if (event->button != CCMouseButton::PREVIEW_MOUSE_LEFT &&
+		event->button != CCMouseButton::PREVIEW_MOUSE_RIGHT)
+		return;
+
+	if (event->button == CCMouseButton::PREVIEW_MOUSE_LEFT)
+		mouseDown = true;
+
+	if (altDown)
+		cropping = true;
+
+	vec2_set(&startPos, x, y);
+	GetStretchHandleData(startPos);
+
+	vec2_divf(&startPos, &startPos, main->previewScale / pixelRatio);
+	startPos.x = std::round(startPos.x);
+	startPos.y = std::round(startPos.y);
+
+	mouseOverItems = SelectedAtPos(startPos);
+	vec2_zero(&lastMoveOffset);
+}
 
 static bool select_one(obs_scene_t *scene, obs_sceneitem_t *item, void *param)
 {
@@ -407,6 +449,20 @@ void OBSBasicPreview::ProcessClick(const vec2 &pos)
 		DoSelect(pos);
 }
 
+void OBSBasicPreview::mouseReleaseEvent(CCMouseEvent *event)
+{
+	if (mouseDown) {
+		vec2 pos = GetMouseEventPos(event);
+
+		if (!mouseMoved)
+			ProcessClick(pos);
+
+		stretchItem = nullptr;
+		mouseDown   = false;
+		mouseMoved  = false;
+		cropping    = false;
+	}
+}
 
 struct SelectedItemBounds {
 	bool first = true;
@@ -883,6 +939,33 @@ void OBSBasicPreview::StretchItem(const vec2 &pos)
 	obs_sceneitem_set_pos(stretchItem, &newPos);
 }
 
+void OBSBasicPreview::mouseMoveEvent(CCMouseEvent *event)
+{
+	if (mouseDown) {
+		vec2 pos = GetMouseEventPos(event);
+
+		if (!mouseMoved && !mouseOverItems &&
+		    stretchHandle == ItemHandle::None) {
+			ProcessClick(startPos);
+			mouseOverItems = SelectedAtPos(startPos);
+		}
+
+		pos.x = std::round(pos.x);
+		pos.y = std::round(pos.y);
+
+		if (stretchHandle != ItemHandle::None) {
+			if (cropping)
+				CropItem(pos);
+			else
+				StretchItem(pos);
+
+		} else if (mouseOverItems) {
+			MoveItems(pos);
+		}
+
+		mouseMoved = true;
+	}
+}
 
 static void DrawCircleAtPos(float x, float y, matrix4 &matrix,
 		float previewScale)

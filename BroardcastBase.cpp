@@ -1110,3 +1110,17 @@ int startRecording()
 	Engine_main()->StartRecording();
 	return 0;
 }
+
+
+void mousePressEvent(CCMouseEvent *event)
+{
+	Engine_main()->previewer->mousePressEvent(event);
+}
+void mouseReleaseEvent(CCMouseEvent *event)
+{
+	Engine_main()->previewer->mouseReleaseEvent(event);
+}
+void mouseMoveEvent(CCMouseEvent *event)
+{
+	Engine_main()->previewer->mouseMoveEvent(event);
+}

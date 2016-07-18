@@ -5,7 +5,7 @@
 #include <graphics/matrix4.h>
 #include "jk-display.hpp"
 #include "BroardcastEngine.hpp"
-
+#include "push-engine.h"
 class BroadcastBase;
 
 #define ITEM_LEFT   (1<<0)
@@ -81,7 +81,7 @@ private:
 	void MoveItems(const vec2 &pos);
 
 	void ProcessClick(const vec2 &pos);
-
+	vec2 GetMouseEventPos(CCMouseEvent * event);
 public:
 	OBSBasicPreview(void * hwnd);
 
@@ -93,4 +93,9 @@ public:
 	 * byte boundry. */
 	static inline void* operator new(size_t size) {return bmalloc(size);}
 	static inline void operator delete(void* ptr) {bfree(ptr);}
+
+	//mouse event
+	void mouseReleaseEvent(CCMouseEvent *event);
+	void mousePressEvent(CCMouseEvent *event);
+	void mouseMoveEvent(CCMouseEvent *event);
 };

@@ -20,6 +20,47 @@ enum  InputSourceType{
 	NONE_SOURCE,
 };
 
+//鼠标事件的类型,注：鼠标事件是用来拖拉、缩放源的渲染窗口的大小
+enum  CCMouseButton {
+	PREVIEW_MOUSE_LEFT,
+	PREVIEW_MOUSE_RIGHT,
+};
+
+//源在渲染区域的层级移动和窗口变换
+enum class CCSourceActiton {
+	//移动层级
+	ORDER_MOVE_UP,
+	ORDER_MOVE_DOWN,
+	ORDER_MOVE_TOP,
+	ORDER_MOVE_BOTTOM,
+	//窗口变换
+	RESET_TRANSFORM,
+	ROTATE_90,
+	ROTATE_180,
+	ROTATE_270,
+	FLIP_HORIZONTAL,
+	FLIP_VERTICAL,
+	FIT_TO_SCREEN,
+	STRETCH_TO_SCREEN,
+	CENTER_TO_SCREEN,
+};
+
+// 鼠标事件+键盘辅助键，Ctrl,Shift键+鼠标点击
+enum CCKey {
+	KEY_NONE = 0x00,
+	KEY_SHIFT = 0x02,
+	KEY_CONTROL = 0x04,
+	KEY_ALT = 0x08,
+};
+
+struct CCMouseEvent {
+	CCMouseButton button;
+	CCKey         modifiers;
+	//
+	int           x;
+	int           y;
+};
+
 PUSH_ENGINE_EXPORT int BroardcastEngine_Init();
 
 PUSH_ENGINE_EXPORT int stopStreaming();
@@ -79,3 +120,8 @@ PUSH_ENGINE_EXPORT std::string getAudioOutputDevice(const char* srcName);
 //PUSH_ENGINE_EXPORT bool hasAudioProperty(const char* srcName);
 //PUSH_ENGINE_EXPORT int getAudioVolume(const char* srcName);
 //PUSH_ENGINE_EXPORT int setAudioVolume(const char* srcName, int vol);
+
+//设置源在渲染窗口中的鼠标事件，改变源的渲染窗口的大小
+PUSH_ENGINE_EXPORT void mousePressEvent(CCMouseEvent *event);
+PUSH_ENGINE_EXPORT void mouseReleaseEvent(CCMouseEvent *event);
+PUSH_ENGINE_EXPORT void mouseMoveEvent(CCMouseEvent *event);
