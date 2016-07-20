@@ -147,8 +147,16 @@ static inline bool HasAudioDevices(const char *source_id)
 	return count != 0;
 }
 
+bool string_compare(std::string id1, std::string id2)
+{
+	if (id1.compare(id2) < 0)
+		return true;
+	else
+		return false;
+}
 
 BroardcastBase::BroardcastBase()
+	:nameArray(string_compare)
 {
 }
 

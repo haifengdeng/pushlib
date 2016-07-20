@@ -63,6 +63,8 @@ int  BroardcastBase::addNewSource(const char* srcName, int type)
 		info.type = (int) type;
 		info.item = data.item;
 		sourceArray[source] = info;
+		nameArray[srcName] = source;
+
 		return 0;
 	}
 	return -1;
@@ -412,28 +414,13 @@ std::string BroardcastBase::enumResolutions(const char* srcName, size_t idx)
 	}
 	obs_source_release(source);
 	obs_properties_t * properties = sourceArray[source].properties;
-	obs_data_t *settings = sourceArray[source].setting;
-
-	obs_property_t *property = obs_properties_first(properties);
-	bool hasNoProperties = !property;
-
-	while (property) {
-		const char        *name = obs_property_name(property);
-		obs_property_type type = obs_property_get_type(property);
-
-		if (!obs_property_visible(property))
-			goto End;
-
-		if (strcmp(RESOLUTION, name) == 0 && type == OBS_PROPERTY_EDITABLE_LIST){
-			obs_combo_format format = obs_property_list_format(property);
-			size_t           count = obs_property_list_item_count(property);
-			if (idx >= count)
-				return "";
-			else
-				return obs_property_list_item_name(property, idx);
-		}
-	End:
-		obs_property_next(&property);
+	obs_property_t *property =obs_properties_get(properties, RESOLUTION);
+	if(property) {
+		size_t   count = obs_property_list_item_count(property);
+		if (idx >= count)
+			return "";
+		else
+			return obs_property_list_item_name(property, idx);
 	}
 	return "";
 }

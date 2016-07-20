@@ -155,6 +155,7 @@ public:
 	int  addNewSource(const char* srcName, int type);
 	int setVisible(const char *srcName, bool isShow);
 	int setSelection(const char* srcName, bool select);
+
 	struct SourceInfo{
 		int             type;
 		obs_source_t    *source;
@@ -164,6 +165,7 @@ public:
 		obs_sceneitem_t  *item;
 	};
 	std::map<obs_source_t *, struct SourceInfo>  sourceArray;
+	std::map<std::string, obs_source_t*, bool(*)(std::string, std::string)> nameArray;
 
 	//streaming & recording
 	void StartStreaming();
