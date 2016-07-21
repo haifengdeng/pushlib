@@ -243,36 +243,20 @@ enum ResType {
 
 std::string BroardcastBase::enumVideoDevices(const char * srcName, size_t idx)
 {
-	obs_source_t  * source = obs_get_source_by_name(srcName);
+	obs_source_t  * source = GetSource(srcName);
 	if (!source){
 		blog(LOG_ERROR, "source %s has not existed.", srcName);
 		return "";
 	}
-	obs_source_release(source);
 
 	obs_properties_t * properties = sourceArray[source].properties;
-	obs_property_t *property = obs_properties_first(properties);
-	bool hasNoProperties = !property;
-
-	while (property) {
-		const char        *name = obs_property_name(property);
-		obs_property_type type = obs_property_get_type(property);
-
-		if (!obs_property_visible(property))
-			goto End;
-
-		if (strcmp(VIDEO_DEVICE_ID, name) == 0 && type == OBS_PROPERTY_LIST){
-			const char       *name = obs_property_name(property);
-			obs_combo_type   type = obs_property_list_type(property);
-			obs_combo_format format = obs_property_list_format(property);
-			size_t           count = obs_property_list_item_count(property);
-			if (idx >= count)
-				return "";
-			else
-				return obs_property_list_item_name(property, idx);
-		}
-	End:
-		obs_property_next(&property);
+	obs_property_t *property = obs_properties_get(properties, VIDEO_DEVICE_ID);
+	if (property) {
+		size_t   count = obs_property_list_item_count(property);
+		if (idx >= count)
+			return "";
+		else
+			return obs_property_list_item_name(property, idx);
 	}
 	return "";
 }
@@ -294,60 +278,57 @@ bool BroardcastBase::getVideoDefault(const char *srcName)
 
 int BroardcastBase::setVideoDevice(const char* srcName, const char *deviceName)
 {
-	obs_source_t  * source = obs_get_source_by_name(srcName);
+	obs_source_t  * source = GetSource(srcName);
 	if (!source){
 		blog(LOG_ERROR, "source %s has not existed.", srcName);
 		return -1;
 	}
-	obs_source_release(source);
 
 	obs_properties_t * properties = sourceArray[source].properties;
 	obs_data_t *settings = sourceArray[source].setting;
 
-	obs_property_t *property = obs_properties_first(properties);
-	bool hasNoProperties = !property;
-
-	while (property) {
-		const char        *name = obs_property_name(property);
-		obs_property_type type = obs_property_get_type(property);
-
-		if (!obs_property_visible(property))
-			goto End;
-
-		if (strcmp(VIDEO_DEVICE_ID, name) == 0 && type == OBS_PROPERTY_LIST){
-			const char       *name = obs_property_name(property);
-			obs_combo_type   type = obs_property_list_type(property);
-			obs_combo_format format = obs_property_list_format(property);
-			size_t           count = obs_property_list_item_count(property);
-			for (int i = 0; i < count; i++){
-				string devname=obs_property_list_item_name(property, i);
-				if (strcmp(devname.c_str(), deviceName) == 0){
-					string devId = obs_property_list_item_string(property, i);
-					obs_data_set_string(settings, VIDEO_DEVICE_ID, devId.c_str());
-					obs_property_modified(property, settings);
-					obs_source_update(source, settings);
-					return 0;
-				}
+	obs_property_t *property = obs_properties_get(properties, VIDEO_DEVICE_ID);
+	if (property) {
+		size_t           count = obs_property_list_item_count(property);
+		for (int i = 0; i < count; i++){
+			string devname = obs_property_list_item_name(property, i);
+			if (strcmp(devname.c_str(), deviceName) == 0){
+				string devId = obs_property_list_item_string(property, i);
+				obs_data_set_string(settings, VIDEO_DEVICE_ID, devId.c_str());
+				obs_property_modified(property, settings);
+				obs_source_update(source, settings);
+				return 0;
 			}
-			return -1;
 		}
-	End:
-		obs_property_next(&property);
+		return -1;
 	}
 	return -1;
 }
 
 std::string BroardcastBase::getVideoDevice(const char* srcName)
 {
-	obs_source_t  * source = obs_get_source_by_name(srcName);
+	obs_source_t  * source = GetSource(srcName);
 	if (!source){
 		blog(LOG_ERROR, "source %s has not existed.", srcName);
 		return "";
 	}
-	obs_source_release(source);
-
+	obs_properties_t * properties = sourceArray[source].properties;
 	obs_data_t * settings = sourceArray[source].setting;
-	return obs_data_get_string(settings, VIDEO_DEVICE_ID);
+	string device_id = obs_data_get_string(settings, VIDEO_DEVICE_ID);
+
+	obs_property_t *property = obs_properties_get(properties, VIDEO_DEVICE_ID);
+	if (property) {
+		size_t           count = obs_property_list_item_count(property);
+		for (int i = 0; i < count; i++){
+			string id = obs_property_list_item_string(property, i);
+			if (strcmp(id.c_str(), device_id.c_str()) == 0){
+				string devname = obs_property_list_item_name(property, i);
+				return devname;
+			}
+		}
+		return "";
+	}
+	return "";
 }
 
 std::string enumVideoDevices(const char *srcName, size_t idx)
