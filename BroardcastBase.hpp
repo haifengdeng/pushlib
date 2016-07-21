@@ -204,9 +204,9 @@ public:
 	std::string getVideoResolution(const char* srcName);
 
 	//枚举、设置视频设备支持的帧率
-	int enumFPSs(const char* srcName, size_t idx);
-	int setVideoFPS(const char* srcName, int fps);
-	int getVideoFPS(const char* srcName);
+	std::string enumFPSs(const char* srcName, size_t idx);
+	int setVideoFPS(const char* srcName,const char * strfps);
+	std::string getVideoFPS(const char* srcName);
 	//枚举、设置视频设备支持的Video formats
 	int enumVideoFormats(const char* srcName, size_t idx);
 	int setVideoFormat(const char* srcName, int format);

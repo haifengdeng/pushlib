@@ -431,90 +431,84 @@ std::string BroardcastBase::getVideoResolution(const char* srcName)
 
 
 //枚举、设置视频设备支持的帧率
-int BroardcastBase::enumFPSs(const char* srcName, size_t idx)
+std::string BroardcastBase::enumFPSs(const char* srcName, size_t idx)
 {
 	setResolutionType2Custom(srcName);
-	obs_source_t  * source = obs_get_source_by_name(srcName);
+
+	obs_source_t  * source = GetSource(srcName);
 	if (!source){
 		blog(LOG_ERROR, "source %s has not existed.", srcName);
-		return -1;
+		return "";
 	}
-	obs_source_release(source);
+
 	obs_properties_t * properties = sourceArray[source].properties;
 	obs_data_t *settings = sourceArray[source].setting;
+	obs_property_t *property = obs_properties_get(properties, FRAME_INTERVAL);
 
-	obs_property_t *property = obs_properties_first(properties);
-	bool hasNoProperties = !property;
-
-	while (property) {
-		const char        *name = obs_property_name(property);
-		obs_property_type type = obs_property_get_type(property);
-
-		if (!obs_property_visible(property))
-			goto End;
-
-		if (strcmp(FRAME_INTERVAL, name) == 0 && type == OBS_COMBO_TYPE_LIST){
-			obs_combo_format format = obs_property_list_format(property);
-			size_t           count = obs_property_list_item_count(property);
-			if (idx >= count)
-				return -1;
-			else
-				return obs_property_list_item_int(property, idx);
-		}
-	End:
-		obs_property_next(&property);
+	if (property) {
+		size_t count = obs_property_list_item_count(property);
+		if (idx >= count)
+			return "";
+		else
+			return obs_property_list_item_name(property, idx);
 	}
-	return -1;
+	return "";
 }
-int BroardcastBase::setVideoFPS(const char* srcName, int fps)
+int BroardcastBase::setVideoFPS(const char* srcName, const char * strfps)
 {
 	setResolutionType2Custom(srcName);
-	obs_source_t  * source = obs_get_source_by_name(srcName);
+	obs_source_t  * source = GetSource(srcName);
 	if (!source){
 		blog(LOG_ERROR, "source %s has not  existed.", srcName);
 		return -1;
 	}
-	obs_source_release(source);
 	obs_properties_t * properties = sourceArray[source].properties;
 	obs_data_t *settings = sourceArray[source].setting;
+	obs_property_t *property = obs_properties_get(properties, FRAME_INTERVAL);
 
-	obs_property_t *property = obs_properties_first(properties);
-	bool hasNoProperties = !property;
-
-	while (property) {
-		const char        *name = obs_property_name(property);
-		obs_property_type type = obs_property_get_type(property);
-
-		if (!obs_property_visible(property))
-			goto End;
-
-		if (strcmp(FRAME_INTERVAL, name) == 0 && type == OBS_COMBO_TYPE_LIST){
-			obs_combo_format format = obs_property_list_format(property);
-			size_t           count = obs_property_list_item_count(property);
-			obs_data_set_int(settings, FRAME_INTERVAL, fps);
-			if (!obs_property_modified(property, settings)){
-				return  -1;
+	if (property) {
+		size_t count = obs_property_list_item_count(property);
+		for (int i = 0; i < count; i++){
+			string name = obs_property_list_item_name(property, i);
+			if (strcmp(name.c_str(), strfps) == 0){
+				int fps = obs_property_list_item_int(property, i);
+				obs_data_set_int(settings, FRAME_INTERVAL, fps);
+				if (!obs_property_modified(property, settings)){
+					return  -1;
+				}
+				else
+					return 0;
 			}
-			else
-				return 0;
 		}
-	End:
-		obs_property_next(&property);
 	}
 	return -1;
 }
-int BroardcastBase::getVideoFPS(const char* srcName)
+std::string BroardcastBase::getVideoFPS(const char* srcName)
 {
-	obs_source_t  * source = obs_get_source_by_name(srcName);
+	obs_source_t  * source = GetSource(srcName);
 	if (!source){
 		blog(LOG_ERROR, "source %s has not existed.", srcName);
-		return -1;
+		return  "";
 	}
-	obs_source_release(source);
-	obs_data_t *settings = sourceArray[source].setting;
 
-	return obs_data_get_int(settings, FRAME_INTERVAL);
+	obs_data_t *settings = sourceArray[source].setting;
+	obs_properties_t * properties = sourceArray[source].properties;
+	obs_property_t *property = obs_properties_get(properties, FRAME_INTERVAL);
+
+	int fps= obs_data_get_int(settings, FRAME_INTERVAL);
+	if (property) {
+		size_t count = obs_property_list_item_count(property);
+		for (int i = 0; i < count; i++){
+			int interval = obs_property_list_item_int(property, i);
+			if (interval == fps){
+				return obs_property_list_item_name(property, i);
+			}
+		}
+	}
+	return "";
 }
+
+
 //枚举、设置视频设备支持的Video formats
 int BroardcastBase::enumVideoFormats(const char* srcName, size_t idx)
 {
@@ -787,15 +781,15 @@ std::string getVideoResolution(const char* srcName)
 }
 
 //枚举、设置视频设备支持的帧率
-int enumFPSs(const char* srcName, size_t idx)
+std::string enumFPSs(const char* srcName, size_t idx)
 {
 	return Engine_main()->enumFPSs(srcName, idx);
 }
-int setVideoFPS(const char* srcName, int fps)
+int setVideoFPS(const char* srcName, const char * strfps)
 {
-	return Engine_main()->setVideoFPS(srcName, fps);
+	return Engine_main()->setVideoFPS(srcName, strfps);
 }
-int getVideoFPS(const char* srcName)
+std::string getVideoFPS(const char* srcName)
 {
 	return Engine_main()->getVideoFPS(srcName);
 }
