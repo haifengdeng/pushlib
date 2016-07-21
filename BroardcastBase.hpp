@@ -208,9 +208,9 @@ public:
 	int setVideoFPS(const char* srcName,const char * strfps);
 	std::string getVideoFPS(const char* srcName);
 	//枚举、设置视频设备支持的Video formats
-	int enumVideoFormats(const char* srcName, size_t idx);
-	int setVideoFormat(const char* srcName, int format);
-	int getVideoFormat(const char* srcName);
+	std::string enumVideoFormats(const char* srcName, size_t idx);
+	int setVideoFormat(const char* srcName, const char * format);
+	std::string getVideoFormat(const char* srcName);
 	//枚举、设置视频设备支持的Color Space
 	std::string enumColorSpaces(const char* srcName, size_t idx);
 	int setVideoColorSpace(const char* srcName, const char *colorspace);

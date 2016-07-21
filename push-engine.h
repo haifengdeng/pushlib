@@ -93,9 +93,9 @@ PUSH_ENGINE_EXPORT std::string enumFPSs(const char* srcName, size_t idx);
 PUSH_ENGINE_EXPORT int setVideoFPS(const char* srcName,const char *strfps);
 PUSH_ENGINE_EXPORT std::string getVideoFPS(const char* srcName);
 //枚举、设置视频设备支持的Video formats
-PUSH_ENGINE_EXPORT int enumVideoFormats(const char* srcName, size_t idx);
-PUSH_ENGINE_EXPORT int setVideoFormat(const char* srcName, int format);
-PUSH_ENGINE_EXPORT int getVideoFormat(const char* srcName);
+PUSH_ENGINE_EXPORT std::string enumVideoFormats(const char* srcName, size_t idx);
+PUSH_ENGINE_EXPORT int setVideoFormat(const char* srcName, const char* format);
+PUSH_ENGINE_EXPORT std::string getVideoFormat(const char* srcName);
 //枚举、设置视频设备支持的Color Space
 PUSH_ENGINE_EXPORT std::string enumColorSpaces(const char* srcName, size_t idx);
 PUSH_ENGINE_EXPORT int setVideoColorSpace(const char* srcName, const char *colorspace);
