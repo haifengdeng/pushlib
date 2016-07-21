@@ -16,6 +16,7 @@
 #include "source_helper.hpp"
 using namespace std;
 
+static std::string logSrcName = "log_source";
 struct AddSourceData {
 	obs_source_t *source;
 	bool visible;
@@ -32,18 +33,26 @@ static void AddSource(void *_data, obs_scene_t *scene)
 	data->item = sceneitem;
 }
 
-int  BroardcastBase::addNewSource(const char* srcName, int type)
+obs_source_t * BroardcastBase::GetSource(const char * srcName)
 {
-	obs_source_t  * source = obs_get_source_by_name(srcName);
+	auto it = nameArray.find(srcName);
+	if (it != nameArray.end()){
+		return it->second;
+	}
+	return NULL;
+}
+
+int  BroardcastBase::addNewSource(const char* srcName, int type,obs_data_t *settings)
+{
+	obs_source_t  * source = GetSource(srcName);
 	if (source){
 		blog(LOG_ERROR, "source %s has existed.", srcName);
-		obs_source_release(source);
 		return -1;
 	}
 
 	std::string id;
 	SourceTypeConvertString((InputSourceType)type, id);
-	source = obs_source_create(id.c_str(), srcName, NULL, NULL);
+	source = obs_source_create(id.c_str(), srcName, settings, NULL);
 
 	if (source) {
 		//add source to scene
@@ -64,7 +73,6 @@ int  BroardcastBase::addNewSource(const char* srcName, int type)
 		info.item = data.item;
 		sourceArray[source] = info;
 		nameArray[srcName] = source;
-
 		return 0;
 	}
 	return -1;
@@ -96,8 +104,7 @@ static bool select_one(obs_scene_t *scene, obs_sceneitem_t *item, void *param)
 
 int BroardcastBase::setSelection(const char* srcName, bool select)
 {
-	obs_source_t * source = obs_get_source_by_name(srcName);
-
+	obs_source_t * source = GetSource(srcName);
 	if (!source){
 		blog(LOG_ERROR, "can not find %s source.", srcName);
 		return -1;
@@ -122,31 +129,29 @@ std::string  BroardcastBase::getLogo()
 
 int BroardcastBase::setLogo(const char *imageFilePath)
 {
-	string name = "logo_source";
-	addNewSource(name.c_str(), IMAGE_FILE_SOURCE);
-	obs_source_t * source = obs_get_source_by_name(name.c_str());
-
+	obs_source_t * source = GetSource(logSrcName.c_str());
 	if (!source){
-		blog(LOG_ERROR, "can not create logo source.");
-		return -1;
+		obs_data_t *settings = obs_data_create();
+	    obs_data_set_string(settings, "file", imageFilePath);
+	    addNewSource(logSrcName.c_str(), IMAGE_FILE_SOURCE,settings);
+		obs_data_release(settings);
 	}
-	obs_source_release(source);
-
-	logoPath = imageFilePath;
-	obs_data_t * settings = sourceArray[source].setting;
-	obs_data_set_string(settings, "file", imageFilePath);
-	obs_source_update(source, settings);
+	else{
+		obs_data_t * settings = sourceArray[source].setting;
+        logoPath = imageFilePath;
+		obs_source_update(source, settings);
+	}
+	
+	return 0;
 }
 
 int BroardcastBase::setLogoGeometry(int x, int y, int width, int height)
 {
-	string name = "logo_source";
-	obs_source_t * source = obs_get_source_by_name(name.c_str());
+	obs_source_t * source = GetSource(logSrcName.c_str());
 	if (!source){
 		blog(LOG_ERROR, "can not find logo.");
 		return -1;
 	}
-	obs_source_release(source);
 	obs_sceneitem_t * item = sourceArray[source].item;
 	logo_geometry.x = x;
 	logo_geometry.y = y;
@@ -179,17 +184,17 @@ int BroardcastBase::getLogoGeometry(int& x, int& y, int& width, int& height)
 }
 int BroardcastBase::removeLogo()
 {
-	string name = "logo_source";
-	obs_source_t * source = obs_get_source_by_name(name.c_str());
+	obs_source_t * source = GetSource(logSrcName.c_str());
 	if (!source){
-		blog(LOG_ERROR, "can not find logo.");
-		return -1;
+		return 0;
 	}
-	obs_source_release(source);
 	obs_sceneitem_t * item = sourceArray[source].item;
+	obs_data_t *settings = sourceArray[source].setting;
+	obs_data_release(settings);
 	obs_sceneitem_remove(item);
 	obs_source_remove(source);
 	sourceArray.erase(source);
+	logoPath.erase();
 }
 
 

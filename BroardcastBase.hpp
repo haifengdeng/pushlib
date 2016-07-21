@@ -152,7 +152,8 @@ public:
 	void ResizePreview(uint32_t cx, uint32_t cy);
 
 	//source
-	int  addNewSource(const char* srcName, int type);
+	int  addNewSource(const char* srcName, int type, obs_data_t *settings = NULL);
+	obs_source_t * GetSource(const char * srcName);
 	int setVisible(const char *srcName, bool isShow);
 	int setSelection(const char* srcName, bool select);
 
