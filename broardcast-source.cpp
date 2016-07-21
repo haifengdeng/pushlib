@@ -355,37 +355,19 @@ std::string getVideoDevice(const char* srcName)
 
 void BroardcastBase::setResolutionType2Custom(const char *srcName)
 {
-	obs_source_t  * source = obs_get_source_by_name(srcName);
+	obs_source_t  * source = GetSource(srcName);
 	if (!source){
 		blog(LOG_ERROR, "source %s has not existed.", srcName);
 		return;
 	}
-	obs_source_release(source);
+
 	obs_data_t * settings = sourceArray[source].setting;
 	int res_type = obs_data_get_int(settings, RES_TYPE);
 	if (res_type != ResType_Custom){
-		obs_property_t *property = obs_properties_first(sourceArray[source].properties);
-		bool hasNoProperties = !property;
-
-		while (property) {
-			const char        *name = obs_property_name(property);
-			obs_property_type type = obs_property_get_type(property);
-
-			if (!obs_property_visible(property))
-				goto End;
-
-			if (strcmp(RES_TYPE, name) == 0 && type == OBS_PROPERTY_LIST){
-				const char       *name = obs_property_name(property);
-				obs_combo_type   type = obs_property_list_type(property);
-				obs_combo_format format = obs_property_list_format(property);
-				size_t           count = obs_property_list_item_count(property);
-				obs_data_set_int(settings, RES_TYPE, ResType_Custom);
-				obs_property_modified(property, settings);
-				return;
-			}
-		End:
-			obs_property_next(&property);
-		}
+		obs_property_t *property = obs_properties_get(sourceArray[source].properties, RES_TYPE);
+		obs_data_set_int(settings, RES_TYPE, ResType_Custom);
+		obs_property_modified(property, settings);
+		return;
 	}
 }
 
@@ -393,12 +375,12 @@ void BroardcastBase::setResolutionType2Custom(const char *srcName)
 std::string BroardcastBase::enumResolutions(const char* srcName, size_t idx)
 {
 	setResolutionType2Custom(srcName);
-	obs_source_t  * source = obs_get_source_by_name(srcName);
+	obs_source_t  * source = GetSource(srcName);
 	if (!source){
 		blog(LOG_ERROR, "source %s has not existed.", srcName);
 		return "";
 	}
-	obs_source_release(source);
+
 	obs_properties_t * properties = sourceArray[source].properties;
 	obs_property_t *property =obs_properties_get(properties, RESOLUTION);
 	if(property) {
@@ -410,55 +392,43 @@ std::string BroardcastBase::enumResolutions(const char* srcName, size_t idx)
 	}
 	return "";
 }
+
 int BroardcastBase::setVideoResolution(const char* srcName, const char *resolution)
 {
 	setResolutionType2Custom(srcName);
-	obs_source_t  * source = obs_get_source_by_name(srcName);
+	obs_source_t  * source = GetSource(srcName);
 	if (!source){
 		blog(LOG_ERROR, "source %s has not existed.", srcName);
 		return -1;
 	}
-	obs_source_release(source);
+
 	obs_properties_t * properties = sourceArray[source].properties;
 	obs_data_t *settings = sourceArray[source].setting;
+	obs_property_t *property = obs_properties_get(properties, RESOLUTION);
 
-	obs_property_t *property = obs_properties_first(properties);
-	bool hasNoProperties = !property;
-
-	while (property) {
-		const char        *name = obs_property_name(property);
-		obs_property_type type = obs_property_get_type(property);
-
-		if (!obs_property_visible(property))
-			goto End;
-
-		if (strcmp(RESOLUTION, name) == 0 && type == OBS_PROPERTY_EDITABLE_LIST){
-			obs_combo_format format = obs_property_list_format(property);
-			size_t           count = obs_property_list_item_count(property);
-			obs_data_set_string(settings, RESOLUTION, resolution);
-			if (!obs_property_modified(property, settings)){
-				return  -1;
-			}
-			else
-				return 0;
+	if (property) {
+		obs_data_set_string(settings, RESOLUTION, resolution);
+		if (!obs_property_modified(property, settings)){
+			return  -1;
 		}
-	End:
-		obs_property_next(&property);
+		else
+			return 0;
 	}
 	return  -1;
 }
 std::string BroardcastBase::getVideoResolution(const char* srcName)
 {
-	obs_source_t  * source = obs_get_source_by_name(srcName);
+	obs_source_t  * source = GetSource(srcName);
 	if (!source){
 		blog(LOG_ERROR, "source %s has not existed.", srcName);
 		return "";
 	}
-	obs_source_release(source);
+
 	obs_data_t *settings = sourceArray[source].setting;
 
 	return obs_data_get_string(settings, RESOLUTION);
 }
+
 
 //枚举、设置视频设备支持的帧率
 int BroardcastBase::enumFPSs(const char* srcName, size_t idx)
