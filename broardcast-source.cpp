@@ -595,119 +595,102 @@ std::string BroardcastBase::getVideoFormat(const char* srcName)
 //枚举、设置视频设备支持的Color Space
 std::string BroardcastBase::enumColorSpaces(const char* srcName, size_t idx)
 {
-	obs_source_t  * source = obs_get_source_by_name(srcName);
+	obs_source_t  * source = GetSource(srcName);
 	if (!source){
 		blog(LOG_ERROR, "source %s has not existed.", srcName);
 		return "";
 	}
-	obs_source_release(source);
+
 	obs_properties_t * properties = sourceArray[source].properties;
 	obs_data_t *settings = sourceArray[source].setting;
 
-	obs_property_t *property = obs_properties_first(properties);
-	bool hasNoProperties = !property;
+	obs_property_t *property = obs_properties_get(properties, COLOR_SPACE);
 
-	while (property) {
-		const char        *name = obs_property_name(property);
-		obs_property_type type = obs_property_get_type(property);
-
-		if (!obs_property_visible(property))
-			goto End;
-
-		if (strcmp(COLOR_SPACE, name) == 0 && type == OBS_COMBO_TYPE_LIST){
-			obs_combo_format format = obs_property_list_format(property);
-			size_t           count = obs_property_list_item_count(property);
-			if (idx >= count)
-				return "";
-			else
-				return obs_property_list_item_name(property, idx);
-		}
-	End:
-		obs_property_next(&property);
+	if (property) {
+		size_t  count = obs_property_list_item_count(property);
+		if (idx >= count)
+			return "";
+		else
+			return obs_property_list_item_name(property, idx);
 	}
 	return "";
 }
+
 int BroardcastBase::setVideoColorSpace(const char* srcName, const char *colorspace)
 {
+
 	obs_source_t  * source = obs_get_source_by_name(srcName);
 	if (!source){
 		blog(LOG_ERROR, "source %s has not existed.", srcName);
 		return -1;
 	}
-	obs_source_release(source);
 	obs_properties_t * properties = sourceArray[source].properties;
 	obs_data_t *settings = sourceArray[source].setting;
+	obs_property_t *property = obs_properties_get(properties, COLOR_SPACE);
 
-	obs_property_t *property = obs_properties_first(properties);
-	bool hasNoProperties = !property;
-
-	while (property) {
-		const char        *name = obs_property_name(property);
-		obs_property_type type = obs_property_get_type(property);
-
-		if (!obs_property_visible(property))
-			goto End;
-
-		if (strcmp(COLOR_SPACE, name) == 0 && type == OBS_COMBO_TYPE_LIST){
-			obs_combo_format format = obs_property_list_format(property);
-			size_t           count = obs_property_list_item_count(property);
-			obs_data_set_string(settings, COLOR_SPACE, colorspace);
-			if (!obs_property_modified(property, settings)){
-				return  -1;
+	if (property) {
+		size_t count = obs_property_list_item_count(property);
+		for (int i = 0; i < count; i++){
+			string name = obs_property_list_item_name(property, i);
+			if (strcmp(name.c_str(), colorspace) == 0){
+				string _space = obs_property_list_item_string(property, i);
+				obs_data_set_string(settings, COLOR_SPACE, _space.c_str());
+				if (!obs_property_modified(property, settings)){
+					return  -1;
+				}
+				else
+					return 0;
 			}
-			else
-				return 0;
 		}
-	End:
-		obs_property_next(&property);
 	}
-	return  -1;
+	return -1;
 }
+
 std::string BroardcastBase::getVideoColorSpace(const char* srcName)
 {
-	obs_source_t  * source = obs_get_source_by_name(srcName);
+	obs_source_t  * source = GetSource(srcName);
 	if (!source){
 		blog(LOG_ERROR, "source %s has not existed.", srcName);
-		return "";
+		return  "";
 	}
-	obs_source_release(source);
 
 	obs_data_t *settings = sourceArray[source].setting;
+	obs_properties_t * properties = sourceArray[source].properties;
+	obs_property_t *property = obs_properties_get(properties, COLOR_SPACE);
 
-	return obs_data_get_string(settings, COLOR_SPACE);
+	string _space = obs_data_get_string(settings, COLOR_SPACE);
+	if (property) {
+		size_t count = obs_property_list_item_count(property);
+		for (int i = 0; i < count; i++){
+			string space_i = obs_property_list_item_string(property, i);
+			if (strcmp(_space.c_str(),space_i.c_str())==0){
+				return obs_property_list_item_name(property, i);
+			}
+		}
+	}
+	return "";
 }
+
 //枚举、设置视频设备支持的Color Range
 std::string BroardcastBase::enumColorRanges(const char* srcName, size_t idx)
 {
-	obs_source_t  * source = obs_get_source_by_name(srcName);
+	obs_source_t  * source = GetSource(srcName);
 	if (!source){
 		blog(LOG_ERROR, "source %s has not existed.", srcName);
 		return "";
 	}
-	obs_source_release(source);
+
 	obs_properties_t * properties = sourceArray[source].properties;
 	obs_data_t *settings = sourceArray[source].setting;
 
-	obs_property_t *property = obs_properties_first(properties);
-	bool hasNoProperties = !property;
+	obs_property_t *property = obs_properties_get(properties, COLOR_RANGE);
 
-	while (property) {
-		const char        *name = obs_property_name(property);
-		obs_property_type type = obs_property_get_type(property);
-
-		if (!obs_property_visible(property))
-			goto End;
-
-		if (strcmp(COLOR_RANGE, name) == 0 && type == OBS_COMBO_TYPE_LIST){
-			obs_combo_format format = obs_property_list_format(property);
-			size_t           count = obs_property_list_item_count(property);
-			if (idx >= count)
-				return "";
-			else
-				return obs_property_list_item_name(property, idx);
-		}
-	End:
-		obs_property_next(&property);
+	if (property) {
+		size_t  count = obs_property_list_item_count(property);
+		if (idx >= count)
+			return "";
+		else
+			return obs_property_list_item_name(property, idx);
 	}
 	return "";
 }
@@ -718,47 +701,50 @@ int BroardcastBase::setVideoColorRange(const char* srcName, const char *colorran
 		blog(LOG_ERROR, "source %s has not existed.", srcName);
 		return -1;
 	}
-	obs_source_release(source);
-
 	obs_properties_t * properties = sourceArray[source].properties;
 	obs_data_t *settings = sourceArray[source].setting;
+	obs_property_t *property = obs_properties_get(properties, COLOR_RANGE);
 
-	obs_property_t *property = obs_properties_first(properties);
-	bool hasNoProperties = !property;
-
-	while (property) {
-		const char        *name = obs_property_name(property);
-		obs_property_type type = obs_property_get_type(property);
-
-		if (!obs_property_visible(property))
-			goto End;
-
-		if (strcmp(COLOR_RANGE, name) == 0 && type == OBS_COMBO_TYPE_LIST){
-			obs_combo_format format = obs_property_list_format(property);
-			size_t           count = obs_property_list_item_count(property);
-			obs_data_set_string(settings, COLOR_RANGE, colorrange);
-			if (!obs_property_modified(property, settings)){
-				return  -1;
+	if (property) {
+		size_t count = obs_property_list_item_count(property);
+		for (int i = 0; i < count; i++){
+			string name = obs_property_list_item_name(property, i);
+			if (strcmp(name.c_str(), colorrange) == 0){
+				string _range = obs_property_list_item_string(property, i);
+				obs_data_set_string(settings, COLOR_RANGE, _range.c_str());
+				if (!obs_property_modified(property, settings)){
+					return  -1;
+				}
+				else
+					return 0;
 			}
-			else
-				return 0;
 		}
-	End:
-		obs_property_next(&property);
 	}
-	return  -1;
+	return -1;
 }
 std::string BroardcastBase::getVideoColorRange(const char* srcName)
 {
-	obs_source_t  * source = obs_get_source_by_name(srcName);
+	obs_source_t  * source = GetSource(srcName);
 	if (!source){
 		blog(LOG_ERROR, "source %s has not existed.", srcName);
-		return "";
+		return  "";
 	}
-	obs_source_release(source);
-	obs_data_t *settings = sourceArray[source].setting;
 
-	return obs_data_get_string(settings, COLOR_RANGE);
+	obs_data_t *settings = sourceArray[source].setting;
+	obs_properties_t * properties = sourceArray[source].properties;
+	obs_property_t *property = obs_properties_get(properties, COLOR_RANGE);
+
+	string _range = obs_data_get_string(settings, COLOR_RANGE);
+	if (property) {
+		size_t count = obs_property_list_item_count(property);
+		for (int i = 0; i < count; i++){
+			string range_i = obs_property_list_item_string(property, i);
+			if (strcmp(_range.c_str(), range_i.c_str()) == 0){
+				return obs_property_list_item_name(property, i);
+			}
+		}
+	}
+	return "";
 }
 
 
