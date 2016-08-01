@@ -823,36 +823,23 @@ std::string getVideoColorRange(const char* srcName)
 //枚举、设置音频输入设备
 std::string BroardcastBase::enumAudioInDevices(const char* srcName, size_t idx)
 {
-	obs_source_t  * source = obs_get_source_by_name(srcName);
+	obs_source_t  * source = GetSource(srcName);
 	if (!source){
 		blog(LOG_ERROR, "source %s has not existed.", srcName);
 		return "";
 	}
-	obs_source_release(source);
 
 	obs_properties_t * properties = sourceArray[source].properties;
 	obs_data_t *settings = sourceArray[source].setting;
 
-	obs_property_t *property = obs_properties_first(properties);
-	bool hasNoProperties = !property;
+	obs_property_t *property = obs_properties_get(properties, OPT_DEVICE_ID);
 
-	while (property) {
-		const char        *name = obs_property_name(property);
-		obs_property_type type = obs_property_get_type(property);
-
-		if (!obs_property_visible(property))
-			goto End;
-
-		if (strcmp(OPT_DEVICE_ID, name) == 0 && type == OBS_COMBO_TYPE_LIST){
-			obs_combo_format format = obs_property_list_format(property);
-			size_t           count = obs_property_list_item_count(property);
-			if (idx >= count)
-				return "";
-			else
-				return obs_property_list_item_name(property, idx);
-		}
-	End:
-		obs_property_next(&property);
+	if (property) {
+		size_t  count = obs_property_list_item_count(property);
+		if (idx >= count)
+			return "";
+		else
+			return obs_property_list_item_name(property, idx);
 	}
 	return "";
 }
@@ -863,43 +850,48 @@ int BroardcastBase::setAudioInputDevice(const char* srcName, const char *deviceN
 		blog(LOG_ERROR, "source %s has not existed.", srcName);
 		return -1;
 	}
-	obs_source_release(source);
-
 	obs_properties_t * properties = sourceArray[source].properties;
 	obs_data_t *settings = sourceArray[source].setting;
+	obs_property_t *property = obs_properties_get(properties, OPT_DEVICE_ID);
 
-	obs_property_t *property = obs_properties_first(properties);
-	bool hasNoProperties = !property;
-
-	while (property) {
-		const char        *name = obs_property_name(property);
-		obs_property_type type = obs_property_get_type(property);
-
-		if (!obs_property_visible(property))
-			goto End;
-
-		if (strcmp(OPT_DEVICE_ID, name) == 0 && type == OBS_COMBO_TYPE_LIST){
-			obs_combo_format format = obs_property_list_format(property);
-			size_t           count = obs_property_list_item_count(property);
-			obs_data_set_string(settings, OPT_DEVICE_ID, deviceName);
-			obs_source_update(source, settings);
+	if (property) {
+		size_t count = obs_property_list_item_count(property);
+		for (int i = 0; i < count; i++){
+			string name = obs_property_list_item_name(property, i);
+			if (strcmp(name.c_str(), deviceName) == 0){
+				string _device = obs_property_list_item_string(property, i);
+				obs_data_set_string(settings, OPT_DEVICE_ID, _device.c_str());
+				obs_source_update(source, settings);
+				return 0;
+			}
 		}
-	End:
-		obs_property_next(&property);
 	}
-	return  -1;
+	return -1;
 }
+
 std::string BroardcastBase::getAudioInputDevice(const char* srcName)
 {
-	obs_source_t  * source = obs_get_source_by_name(srcName);
+	obs_source_t  * source = GetSource(srcName);
 	if (!source){
-		blog(LOG_ERROR, "source %s has not existed.", srcName);	
-		return "";
+		blog(LOG_ERROR, "source %s has not existed.", srcName);
+		return  "";
 	}
-	obs_source_release(source);
 
 	obs_data_t *settings = sourceArray[source].setting;
-	return obs_data_get_string(settings, OPT_DEVICE_ID);
+	obs_properties_t * properties = sourceArray[source].properties;
+	obs_property_t *property = obs_properties_get(properties, OPT_DEVICE_ID);
+
+	string _device = obs_data_get_string(settings, OPT_DEVICE_ID);
+	if (property) {
+		size_t count = obs_property_list_item_count(property);
+		for (int i = 0; i < count; i++){
+			string device_i = obs_property_list_item_string(property, i);
+			if (strcmp(_device.c_str(), device_i.c_str()) == 0){
+				return obs_property_list_item_name(property, i);
+			}
+		}
+	}
+	return "";
 }
 
 //枚举、设置音频输出设备
