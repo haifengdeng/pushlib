@@ -229,6 +229,10 @@ public:
 	std::string enumAudioOutDevices(const char* srcName, size_t idx);
 	int setAudioOutputDevice(const char* srcName, const char *deviceName);
 	std::string getAudioOutputDevice(const char* srcName);
+
+	//获取，设置音频输入,输出设备的音量
+	int getAudioVolume(const char* srcName);
+	int setAudioVolume(const char* srcName, int vol);
 };
 
 int GetProfilePath(char *path, size_t size, const char *file);

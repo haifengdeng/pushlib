@@ -934,3 +934,37 @@ std::string getAudioOutputDevice(const char* srcName)
 {
 	return Engine_main()->getAudioOutputDevice(srcName);
 }
+
+
+//获取，设置音频输入,输出设备的音量
+int BroardcastBase::getAudioVolume(const char* srcName)
+{
+	obs_source_t  * source = GetSource(srcName);
+	if (!source){
+		blog(LOG_ERROR, "source %s has not existed.", srcName);
+		return  -1;
+	}
+
+	float val = obs_source_get_volume(source);
+	return (int)(val * 100.0f);
+}
+int BroardcastBase::setAudioVolume(const char* srcName, int vol)
+{
+	obs_source_t  * source = GetSource(srcName);
+	if (!source){
+		blog(LOG_ERROR, "source %s has not existed.", srcName);
+		return  -1;
+	}
+	float val = float(vol) / 100.0f;
+	obs_source_set_volume(source, val);
+	return 0;
+}
+
+int getAudioVolume(const char* srcName)
+{
+	return Engine_main()->getAudioVolume(srcName);
+}
+int setAudioVolume(const char* srcName, int vol)
+{
+	return Engine_main()->setAudioVolume(srcName, vol);
+}

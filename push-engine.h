@@ -117,9 +117,8 @@ PUSH_ENGINE_EXPORT std::string getAudioOutputDevice(const char* srcName);
 
 
 //获取，设置音频输入,输出设备的音量
-//PUSH_ENGINE_EXPORT bool hasAudioProperty(const char* srcName);
-//PUSH_ENGINE_EXPORT int getAudioVolume(const char* srcName);
-//PUSH_ENGINE_EXPORT int setAudioVolume(const char* srcName, int vol);
+PUSH_ENGINE_EXPORT int getAudioVolume(const char* srcName);
+PUSH_ENGINE_EXPORT int setAudioVolume(const char* srcName, int vol);
 
 //设置源在渲染窗口中的鼠标事件，改变源的渲染窗口的大小
 PUSH_ENGINE_EXPORT void mousePressEvent(CCMouseEvent *event);
