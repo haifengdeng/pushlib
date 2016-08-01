@@ -252,6 +252,27 @@ public:
 	std::string enumGameWindows(const char* srcName, size_t idx);
 	int setGameWindow(const char* srcName, const char *game);
 	std::string getGameWindow(const char* srcName);
+
+
+	int setCurrentSetting(const char* srcName, const char *setting_item,int setting_type,const void * data);
+	std::string getCurrentSetting(const char* srcName, const char *setting_item);
+	bool getCurrentSettingBool(const char* srcName, const char *setting_item);
+	//设置文本源的内容为字符串
+	int setTextFromString(const char* srcName, const char *text);
+	//设置文本源的内容为文件内容(UTF-8/UTF-16)
+	int setTextFromFile(const char* srcName, const char *file);
+
+	std::string getTextString(const char* srcName);
+	std::string getTextFile(const char* srcName);
+	//文本源的字体族，大小，线性渐变颜色
+	std::string getTextFontFace(const char* srcName);
+	int setTextFontFace(const char* srcName, const char *face);
+	int getTextFontSize(const char* srcName);
+	int setTextFontSize(const char* srcName, int size);
+	//颜色字符串是argb，如#ffff00ff
+	int setTextFontColor(const char* srcName, unsigned int color1, unsigned int color2);
+	unsigned int getTextFontColor1(const char* srcName);
+	unsigned int getTextFontColor2(const char* srcName);
 };
 
 int GetProfilePath(char *path, size_t size, const char *file);

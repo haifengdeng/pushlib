@@ -66,7 +66,16 @@ int  BroardcastBase::addNewSource(const char* srcName, int type,obs_data_t *sett
 		//add source to map
 		struct SourceInfo info;
 		info.name = srcName;
+
+#if 0
+		info.setting = obs_data_create();
+		obs_data_t * settings = obs_source_get_settings(source);
+		obs_data_apply(info.setting, settings);
+		obs_data_release(settings);
+#else
 		info.setting = obs_source_get_settings(source);
+#endif
+
 		info.properties = obs_source_properties(source);
 		info.source = source;
 		info.type = (int) type;
@@ -1041,6 +1050,7 @@ int BroardcastBase::setCurrentSource(const char* srcName,
 	return -1;
 
 }
+
 std::string BroardcastBase::getCurrentSource(const char* srcName, 
 	const char *proper_str, 
 	int prop_fmt)
@@ -1077,6 +1087,7 @@ std::string BroardcastBase::getCurrentSource(const char* srcName,
 	}
 	return "";
 }
+
 //枚举、设置桌面屏幕
 std::string BroardcastBase::enumMonitors(const char* srcName, size_t idx)
 {
@@ -1162,4 +1173,236 @@ int setGameWindow(const char* srcName, const char *game)
 std::string getGameWindow(const char* srcName)
 {
 	return Engine_main()->getGameWindow(srcName);
+}
+
+
+enum pa_data_type{
+	pa_data_bool,
+	pa_data_string
+};
+int BroardcastBase::setCurrentSetting(const char* srcName, const char *setting_item, int setting_type, const void * data)
+{
+	pa_data_type type = (pa_data_type)setting_type;
+	obs_source_t  * source = obs_get_source_by_name(srcName);
+	if (!source){
+		blog(LOG_ERROR, "source %s has not existed.", srcName);
+		return -1;
+	}
+	obs_properties_t * properties = sourceArray[source].properties;
+	obs_data_t *settings = sourceArray[source].setting;
+	obs_property_t *property = obs_properties_get(properties, setting_item);
+	if (type == pa_data_bool){
+		obs_data_set_bool(settings, setting_item, (bool)data);
+	}
+	else if (type == pa_data_string){
+		obs_data_set_string(settings, setting_item, (const char *)data);
+	}
+	else{
+		return -1;
+	}
+	obs_property_modified(property, settings);
+	obs_source_update(source, settings);
+	return 0;
+}
+
+std::string BroardcastBase::getCurrentSetting(const char* srcName, const char *setting_item)
+{
+	obs_source_t  * source = obs_get_source_by_name(srcName);
+	if (!source){
+		blog(LOG_ERROR, "source %s has not existed.", srcName);
+		return "";
+	}
+	obs_properties_t * properties = sourceArray[source].properties;
+	obs_data_t *settings = sourceArray[source].setting;
+	obs_property_t *property = obs_properties_get(properties, setting_item);
+
+	return	obs_data_get_string(settings, setting_item);
+}
+bool BroardcastBase::getCurrentSettingBool(const char* srcName, const char *setting_item)
+{
+	obs_source_t  * source = obs_get_source_by_name(srcName);
+	if (!source){
+		blog(LOG_ERROR, "source %s has not existed.", srcName);
+		return "";
+	}
+	obs_properties_t * properties = sourceArray[source].properties;
+	obs_data_t *settings = sourceArray[source].setting;
+	obs_property_t *property = obs_properties_get(properties, setting_item);
+
+	return	obs_data_get_bool(settings, setting_item);
+}
+
+//设置文本源的内容为字符串
+int BroardcastBase::setTextFromString(const char* srcName, const char *text)
+{
+	return setCurrentSetting(srcName, "text", pa_data_string, text);
+}
+//设置文本源的内容为文件内容(UTF-8/UTF-16)
+int BroardcastBase::setTextFromFile(const char* srcName, const char *file)
+{
+	setCurrentSetting(srcName, "text_file", pa_data_string, (const void *)file);
+	setCurrentSetting(srcName, "from_file", pa_data_bool, (const void *)true);
+	return 0;
+}
+
+std::string BroardcastBase::getTextString(const char* srcName)
+{
+	return getCurrentSetting(srcName, "text");
+}
+
+std::string BroardcastBase::getTextFile(const char* srcName)
+{
+	return getCurrentSetting(srcName, "text_file");
+}
+
+//文本源的字体族，大小，线性渐变颜色
+std::string BroardcastBase::getTextFontFace(const char* srcName)
+{
+	obs_source_t  * source = obs_get_source_by_name(srcName);
+	if (!source){
+		blog(LOG_ERROR, "source %s has not existed.", srcName);
+		return "";
+	}
+	obs_properties_t * properties = sourceArray[source].properties;
+	obs_data_t *settings = sourceArray[source].setting;
+	obs_data_t *obj = obs_data_get_obj(settings, "font");
+	std::string fontface = obs_data_get_string(obj, "face");
+	obs_data_release(obj);
+	return fontface;
+}
+int BroardcastBase::setTextFontFace(const char* srcName, const char *face)
+{
+	obs_source_t  * source = obs_get_source_by_name(srcName);
+	if (!source){
+		blog(LOG_ERROR, "source %s has not existed.", srcName);
+		return -1;
+	}
+	obs_properties_t * properties = sourceArray[source].properties;
+	obs_data_t *settings = sourceArray[source].setting;
+	obs_data_t *obj = obs_data_get_obj(settings, "font");
+	obs_data_set_string(obj, "face",face);
+	obs_data_release(obj);
+	obs_source_update(source, settings);
+	return 0;
+}
+int BroardcastBase::getTextFontSize(const char* srcName)
+{
+	obs_source_t  * source = obs_get_source_by_name(srcName);
+	if (!source){
+		blog(LOG_ERROR, "source %s has not existed.", srcName);
+		return -1;
+	}
+	obs_properties_t * properties = sourceArray[source].properties;
+	obs_data_t *settings = sourceArray[source].setting;
+	obs_data_t *obj = obs_data_get_obj(settings, "font");
+	int size = obs_data_get_int(obj, "size");
+	obs_data_release(obj);
+	return size;
+}
+int BroardcastBase::setTextFontSize(const char* srcName, int size)
+{
+	obs_source_t  * source = obs_get_source_by_name(srcName);
+	if (!source){
+		blog(LOG_ERROR, "source %s has not existed.", srcName);
+		return -1;
+	}
+	obs_properties_t * properties = sourceArray[source].properties;
+	obs_data_t *settings = sourceArray[source].setting;
+	obs_data_t *obj = obs_data_get_obj(settings, "font");
+	obs_data_set_int(obj, "size", size);
+	obs_data_release(obj);
+	obs_source_update(source, settings);
+	return 0;
+}
+//颜色字符串是argb，如#ffff00ff
+int BroardcastBase::setTextFontColor(const char* srcName, unsigned int color1, unsigned int color2)
+{
+	obs_source_t  * source = obs_get_source_by_name(srcName);
+	if (!source){
+		blog(LOG_ERROR, "source %s has not existed.", srcName);
+		return -1;
+	}
+	obs_properties_t * properties = sourceArray[source].properties;
+	obs_data_t *settings = sourceArray[source].setting;
+	obs_data_set_int(settings, "color1", color1);
+	obs_data_set_int(settings, "color2", color2);
+	obs_source_update(source, settings);
+	return 0;
+}
+
+unsigned int BroardcastBase::getTextFontColor1(const char* srcName)
+{
+	obs_source_t  * source = obs_get_source_by_name(srcName);
+	if (!source){
+		blog(LOG_ERROR, "source %s has not existed.", srcName);
+		return -1;
+	}
+	obs_properties_t * properties = sourceArray[source].properties;
+	obs_data_t *settings = sourceArray[source].setting;
+	unsigned int color1 = obs_data_get_int(settings, "color1");
+	return color1;
+}
+
+unsigned int  BroardcastBase::getTextFontColor2(const char* srcName)
+{
+	obs_source_t  * source = obs_get_source_by_name(srcName);
+	if (!source){
+		blog(LOG_ERROR, "source %s has not existed.", srcName);
+		return -1;
+	}
+	obs_properties_t * properties = sourceArray[source].properties;
+	obs_data_t *settings = sourceArray[source].setting;
+	unsigned int color2 = obs_data_get_int(settings, "color2");
+	return color2;
+}
+
+
+//设置文本源的内容为字符串
+int setTextFromString(const char* srcName, const char *text)
+{
+	return Engine_main()->setTextFromString(srcName, text);
+}
+//设置文本源的内容为文件内容(UTF-8/UTF-16)
+int setTextFromFile(const char* srcName, const char *file)
+{
+	return Engine_main()->setTextFromFile(srcName, file);
+}
+
+std::string getTextString(const char* srcName)
+{
+	return Engine_main()->getTextString(srcName);
+}
+std::string getTextFile(const char* srcName)
+{
+	return Engine_main()->getTextFile(srcName);
+}
+//文本源的字体族，大小，线性渐变颜色
+std::string getTextFontFace(const char* srcName)
+{
+	return Engine_main()->getTextFontFace(srcName);
+}
+int setTextFontFace(const char* srcName, const char *face)
+{
+	return Engine_main()->setTextFontFace(srcName,face);
+}
+int getTextFontSize(const char* srcName)
+{
+	return Engine_main()->getTextFontSize(srcName);
+}
+int setTextFontSize(const char* srcName, int size)
+{
+	return Engine_main()->setTextFontSize(srcName,size);
+}
+//颜色字符串是argb，如#ffff00ff
+int setTextFontColor(const char* srcName, unsigned int color1, unsigned int color2)
+{
+	return Engine_main()->setTextFontColor(srcName,color1,color2);
+}
+unsigned int getTextFontColor1(const char* srcName)
+{
+	return Engine_main()->getTextFontColor1(srcName);
+}
+unsigned int getTextFontColor2(const char* srcName)
+{
+	return Engine_main()->getTextFontColor2(srcName);
 }

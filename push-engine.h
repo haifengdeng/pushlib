@@ -140,3 +140,21 @@ PUSH_ENGINE_EXPORT std::string getAppWindow(const char* srcName);
 PUSH_ENGINE_EXPORT std::string enumGameWindows(const char* srcName, size_t idx);
 PUSH_ENGINE_EXPORT int setGameWindow(const char* srcName, const char *game);
 PUSH_ENGINE_EXPORT std::string getGameWindow(const char* srcName);
+
+
+//设置文本源的内容为字符串
+PUSH_ENGINE_EXPORT int setTextFromString(const char* srcName, const char *text);
+//设置文本源的内容为文件内容(UTF-8/UTF-16)
+PUSH_ENGINE_EXPORT int setTextFromFile(const char* srcName, const char *file);
+
+PUSH_ENGINE_EXPORT std::string getTextString(const char* srcName);
+PUSH_ENGINE_EXPORT std::string getTextFile(const char* srcName);
+//文本源的字体族，大小，线性渐变颜色
+PUSH_ENGINE_EXPORT std::string getTextFontFace(const char* srcName);
+PUSH_ENGINE_EXPORT int setTextFontFace(const char* srcName, const char *face);
+PUSH_ENGINE_EXPORT int getTextFontSize(const char* srcName);
+PUSH_ENGINE_EXPORT int setTextFontSize(const char* srcName, int size);
+//颜色字符串是argb，如#ffff00ff
+PUSH_ENGINE_EXPORT int setTextFontColor(const char* srcName, unsigned int color1, unsigned int color2);
+PUSH_ENGINE_EXPORT unsigned int getTextFontColor1(const char* srcName);
+PUSH_ENGINE_EXPORT unsigned int getTextFontColor2(const char* srcName);
