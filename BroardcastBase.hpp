@@ -233,6 +233,25 @@ public:
 	//获取，设置音频输入,输出设备的音量
 	int getAudioVolume(const char* srcName);
 	int setAudioVolume(const char* srcName, int vol);
+
+
+	std::string enumSource(const char *srcName, const char *proper_str, size_t idx);
+	int setCurrentSource(const char* srcName, const char *proper_str, int prop_fmt, const char *source);
+	std::string getCurrentSource(const char* srcName, const char *proper_str, int prop_fmt);
+	//枚举、设置桌面屏幕
+	std::string enumMonitors(const char* srcName, size_t idx);
+	int setMonitor(const char* srcName, const char *monitor);
+	std::string getMonitor(const char* srcName);
+
+	//枚举、设置应用程序窗口
+	std::string enumAppWindows(const char* srcName, size_t idx);
+	int setAppWindow(const char* srcName, const char *window);
+	std::string getAppWindow(const char* srcName);
+
+	//枚举、设置游戏窗口
+	std::string enumGameWindows(const char* srcName, size_t idx);
+	int setGameWindow(const char* srcName, const char *game);
+	std::string getGameWindow(const char* srcName);
 };
 
 int GetProfilePath(char *path, size_t size, const char *file);

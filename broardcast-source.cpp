@@ -635,11 +635,9 @@ int BroardcastBase::setVideoColorSpace(const char* srcName, const char *colorspa
 			if (strcmp(name.c_str(), colorspace) == 0){
 				string _space = obs_property_list_item_string(property, i);
 				obs_data_set_string(settings, COLOR_SPACE, _space.c_str());
-				if (!obs_property_modified(property, settings)){
-					return  -1;
-				}
-				else
-					return 0;
+				obs_property_modified(property, settings);
+				obs_source_update(source, settings);
+				return 0;
 			}
 		}
 	}
@@ -712,11 +710,9 @@ int BroardcastBase::setVideoColorRange(const char* srcName, const char *colorran
 			if (strcmp(name.c_str(), colorrange) == 0){
 				string _range = obs_property_list_item_string(property, i);
 				obs_data_set_string(settings, COLOR_RANGE, _range.c_str());
-				if (!obs_property_modified(property, settings)){
-					return  -1;
-				}
-				else
-					return 0;
+				obs_property_modified(property, settings);
+				obs_source_update(source, settings);
+				return 0;
 			}
 		}
 	}
@@ -967,4 +963,203 @@ int getAudioVolume(const char* srcName)
 int setAudioVolume(const char* srcName, int vol)
 {
 	return Engine_main()->setAudioVolume(srcName, vol);
+}
+
+
+enum obs_prop_format {
+	OBS_FORMAT_INVALID,
+	OBS_FORMAT_INT,
+	OBS_FORMAT_FLOAT,
+	OBS_FORMAT_STRING
+};
+
+
+
+std::string BroardcastBase::enumSource(const char *srcName, 
+	const char *proper_str,
+	size_t idx)
+{
+	obs_source_t  * source = GetSource(srcName);
+	if (!source){
+		blog(LOG_ERROR, "source %s has not existed.", srcName);
+		return "";
+	}
+
+	obs_properties_t * properties = sourceArray[source].properties;
+	obs_data_t *settings = sourceArray[source].setting;
+
+	obs_property_t *property = obs_properties_get(properties, proper_str);
+
+	if (property) {
+		size_t  count = obs_property_list_item_count(property);
+		if (idx >= count)
+			return "";
+		else
+			return obs_property_list_item_name(property, idx);
+	}
+	return "";
+}
+int BroardcastBase::setCurrentSource(const char* srcName,
+	   const char *proper_str, 
+	   int prop_fmt,
+	   const char *srcString)
+{
+	obs_prop_format prop_format = (obs_prop_format)prop_fmt;
+	obs_source_t  * source = obs_get_source_by_name(srcName);
+	if (!source){
+		blog(LOG_ERROR, "source %s has not existed.", srcName);
+		return -1;
+	}
+	obs_properties_t * properties = sourceArray[source].properties;
+	obs_data_t *settings = sourceArray[source].setting;
+	obs_property_t *property = obs_properties_get(properties, proper_str);
+
+	if (property) {
+		size_t count = obs_property_list_item_count(property);
+		for (int i = 0; i < count; i++){
+			string name = obs_property_list_item_name(property, i);
+			if (strcmp(name.c_str(), srcString) == 0){
+				if (OBS_FORMAT_INT == prop_format){
+					int  _id = obs_property_list_item_int(property, i);
+					obs_data_set_int(settings, proper_str, _id);
+					obs_property_modified(property, settings);
+					obs_source_update(source, settings);
+				}
+				else if (OBS_FORMAT_STRING == prop_format){
+					string _device = obs_property_list_item_string(property, i);
+					obs_data_set_string(settings, proper_str, _device.c_str());
+					obs_property_modified(property, settings);
+					obs_source_update(source, settings);
+				}
+				else{
+					return -1;
+				}
+				return 0;
+			}
+		}
+	}
+	return -1;
+
+}
+std::string BroardcastBase::getCurrentSource(const char* srcName, 
+	const char *proper_str, 
+	int prop_fmt)
+{
+	obs_prop_format prop_format = (obs_prop_format)prop_fmt;
+	obs_source_t  * source = GetSource(srcName);
+	if (!source){
+		blog(LOG_ERROR, "source %s has not existed.", srcName);
+		return  "";
+	}
+
+	obs_data_t *settings = sourceArray[source].setting;
+	obs_properties_t * properties = sourceArray[source].properties;
+	obs_property_t *property = obs_properties_get(properties, proper_str);
+
+	if (property) {		
+		size_t count = obs_property_list_item_count(property);
+		for (int i = 0; i < count; i++){
+			if (OBS_FORMAT_INT == prop_format){
+				int  _id = obs_data_get_int(settings, proper_str);
+				int _id_i = obs_property_list_item_int(property, i);
+				if (_id == _id_i){
+					return obs_property_list_item_name(property, i);
+				}
+			}
+			else if (OBS_FORMAT_STRING == prop_format){
+				string _device = obs_data_get_string(settings, proper_str);
+				string device_i = obs_property_list_item_string(property, i);
+				if (strcmp(_device.c_str(), device_i.c_str()) == 0){
+					return obs_property_list_item_name(property, i);
+				}
+			}
+		}
+	}
+	return "";
+}
+//枚举、设置桌面屏幕
+std::string BroardcastBase::enumMonitors(const char* srcName, size_t idx)
+{
+	return enumSource(srcName,"monitor", idx);
+}
+int BroardcastBase::setMonitor(const char* srcName, const char *monitor)
+{
+	return setCurrentSource(srcName, "monitor", OBS_FORMAT_INT, monitor);
+}
+std::string BroardcastBase::getMonitor(const char* srcName)
+{
+	return getCurrentSource(srcName,"monitor", OBS_FORMAT_INT);
+}
+
+//枚举、设置应用程序窗口
+std::string BroardcastBase::enumAppWindows(const char* srcName, size_t idx)
+{
+	return enumSource(srcName, "window", idx);
+}
+int BroardcastBase::setAppWindow(const char* srcName, const char *window)
+{
+	return setCurrentSource(srcName, "window", OBS_FORMAT_STRING, window);
+}
+std::string BroardcastBase::getAppWindow(const char* srcName)
+{
+	return getCurrentSource(srcName, "window", OBS_FORMAT_STRING);
+}
+
+#define SETTING_CAPTURE_WINDOW   "window"
+//枚举、设置游戏窗口
+std::string BroardcastBase::enumGameWindows(const char* srcName, size_t idx)
+{
+	return enumSource(srcName, SETTING_CAPTURE_WINDOW, idx);
+}
+int BroardcastBase::setGameWindow(const char* srcName, const char *game)
+{
+	return setCurrentSource(srcName, SETTING_CAPTURE_WINDOW, OBS_FORMAT_STRING,game);
+}
+std::string BroardcastBase::getGameWindow(const char* srcName)
+{
+	return getCurrentSource(srcName, SETTING_CAPTURE_WINDOW, OBS_FORMAT_STRING);
+}
+
+//枚举、设置桌面屏幕
+std::string enumMonitors(const char* srcName, size_t idx)
+{
+	return Engine_main()->enumMonitors(srcName, idx);
+}
+int setMonitor(const char* srcName, const char *monitor)
+{
+	return Engine_main()->setMonitor(srcName, monitor);
+}
+
+std::string getMonitor(const char* srcName)
+{
+	return Engine_main()->getMonitor(srcName);
+}
+
+//枚举、设置应用程序窗口
+std::string enumAppWindows(const char* srcName, size_t idx)
+{
+	return Engine_main()->enumAppWindows(srcName, idx);
+}
+int setAppWindow(const char* srcName, const char *window)
+{
+	return Engine_main()->setAppWindow(srcName, window);
+}
+std::string getAppWindow(const char* srcName)
+{
+	return Engine_main()->getAppWindow(srcName);
+}
+
+//枚举、设置游戏窗口
+std::string enumGameWindows(const char* srcName, size_t idx)
+{
+	return Engine_main()->enumGameWindows(srcName, idx);
+}
+
+int setGameWindow(const char* srcName, const char *game)
+{
+	return Engine_main()->setGameWindow(srcName, game);
+}
+std::string getGameWindow(const char* srcName)
+{
+	return Engine_main()->getGameWindow(srcName);
 }

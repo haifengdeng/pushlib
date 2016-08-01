@@ -124,3 +124,19 @@ PUSH_ENGINE_EXPORT int setAudioVolume(const char* srcName, int vol);
 PUSH_ENGINE_EXPORT void mousePressEvent(CCMouseEvent *event);
 PUSH_ENGINE_EXPORT void mouseReleaseEvent(CCMouseEvent *event);
 PUSH_ENGINE_EXPORT void mouseMoveEvent(CCMouseEvent *event);
+
+
+//枚举、设置桌面屏幕
+PUSH_ENGINE_EXPORT std::string enumMonitors(const char* srcName, size_t idx);
+PUSH_ENGINE_EXPORT int setMonitor(const char* srcName, const char *monitor);
+PUSH_ENGINE_EXPORT std::string getMonitor(const char* srcName);
+
+//枚举、设置应用程序窗口
+PUSH_ENGINE_EXPORT std::string enumAppWindows(const char* srcName, size_t idx);
+PUSH_ENGINE_EXPORT int setAppWindow(const char* srcName, const char *window);
+PUSH_ENGINE_EXPORT std::string getAppWindow(const char* srcName);
+
+//枚举、设置游戏窗口
+PUSH_ENGINE_EXPORT std::string enumGameWindows(const char* srcName, size_t idx);
+PUSH_ENGINE_EXPORT int setGameWindow(const char* srcName, const char *game);
+PUSH_ENGINE_EXPORT std::string getGameWindow(const char* srcName);
