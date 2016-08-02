@@ -62,6 +62,7 @@ struct CCMouseEvent {
 };
 
 PUSH_ENGINE_EXPORT int BroardcastEngine_Init();
+PUSH_ENGINE_EXPORT int BroardcastEngine_unInit();
 
 PUSH_ENGINE_EXPORT int stopStreaming();
 PUSH_ENGINE_EXPORT int startStreaming(std::string server_, std::string key_);
@@ -158,3 +159,6 @@ PUSH_ENGINE_EXPORT int setTextFontSize(const char* srcName, int size);
 PUSH_ENGINE_EXPORT int setTextFontColor(const char* srcName, unsigned int color1, unsigned int color2);
 PUSH_ENGINE_EXPORT unsigned int getTextFontColor1(const char* srcName);
 PUSH_ENGINE_EXPORT unsigned int getTextFontColor2(const char* srcName);
+
+//设置源srcName的预览窗口的句柄
+PUSH_ENGINE_EXPORT void setSourcePreview(const char *srcName, const void* Window);

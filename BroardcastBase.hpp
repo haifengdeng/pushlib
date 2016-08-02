@@ -156,7 +156,9 @@ public:
 	obs_source_t * GetSource(const char * srcName);
 	int setVisible(const char *srcName, bool isShow);
 	int setSelection(const char* srcName, bool select);
-
+	void removeOBSSource(const char * srcName);
+	void removeOBSSource(obs_source_t* source);
+	void removeAllSource();
 	struct SourceInfo{
 		int             type;
 		obs_source_t    *source;

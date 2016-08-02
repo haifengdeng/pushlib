@@ -30,7 +30,7 @@ class BroardcastEngine
 private:
 	std::string                    locale;
 	TextLookup                     textLookup;
-	OBSContext                     obsContext;
+	//OBSContext                     obsContext;
 
 	ConfigFile                     globalConfig;
 	BroardcastBase *               bcBase = nullptr;

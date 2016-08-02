@@ -42,93 +42,6 @@ int GetProfilePath(char *path, size_t size, const char *file)
 	return snprintf(path, size, "%s/%s/%s", profiles_path, profile, file);
 }
 
-static void SaveAudioDevice(const char *name, int channel, obs_data_t *parent,
-	vector<OBSSource> &audioSources)
-{
-	obs_source_t *source = obs_get_output_source(channel);
-	if (!source)
-		return;
-
-	audioSources.push_back(source);
-
-	obs_data_t *data = obs_save_source(source);
-
-	obs_data_set_obj(parent, name, data);
-
-	obs_data_release(data);
-	obs_source_release(source);
-}
-
-static obs_data_t *GenerateSaveData(obs_data_array_t *sceneOrder,
-	obs_data_array_t *quickTransitionData, int transitionDuration,
-	obs_data_array_t *transitions,
-	OBSScene &scene, OBSSource &curProgramScene)
-{
-	obs_data_t *saveData = obs_data_create();
-
-	vector<OBSSource> audioSources;
-	audioSources.reserve(5);
-
-	SaveAudioDevice(DESKTOP_AUDIO_1, 1, saveData, audioSources);
-	SaveAudioDevice(DESKTOP_AUDIO_2, 2, saveData, audioSources);
-	SaveAudioDevice(AUX_AUDIO_1, 3, saveData, audioSources);
-	SaveAudioDevice(AUX_AUDIO_2, 4, saveData, audioSources);
-	SaveAudioDevice(AUX_AUDIO_3, 5, saveData, audioSources);
-
-	auto FilterAudioSources = [&](obs_source_t *source)
-	{
-		return find(begin(audioSources), end(audioSources), source) ==
-			end(audioSources);
-	};
-	using FilterAudioSources_t = decltype(FilterAudioSources);
-
-	obs_data_array_t *sourcesArray = obs_save_sources_filtered(
-		[](void *data, obs_source_t *source)
-	{
-		return (*static_cast<FilterAudioSources_t*>(data))(source);
-	}, static_cast<void*>(&FilterAudioSources));
-
-	obs_source_t *transition = obs_get_output_source(0);
-	obs_source_t *currentScene = obs_scene_get_source(scene);
-	const char   *sceneName = obs_source_get_name(currentScene);
-	const char   *programName = obs_source_get_name(curProgramScene);
-
-	const char *sceneCollection = config_get_string(GetGlobalConfig(),
-		"Basic", "SceneCollection");
-
-	obs_data_set_string(saveData, "current_scene", sceneName);
-	obs_data_set_string(saveData, "current_program_scene", programName);
-	obs_data_set_array(saveData, "scene_order", sceneOrder);
-	obs_data_set_string(saveData, "name", sceneCollection);
-	obs_data_set_array(saveData, "sources", sourcesArray);
-	obs_data_set_array(saveData, "quick_transitions", quickTransitionData);
-	obs_data_set_array(saveData, "transitions", transitions);
-	obs_data_array_release(sourcesArray);
-
-	obs_data_set_string(saveData, "current_transition",
-		obs_source_get_name(transition));
-	obs_data_set_int(saveData, "transition_duration", transitionDuration);
-	obs_source_release(transition);
-
-	return saveData;
-}
-
-
-static void LoadAudioDevice(const char *name, int channel, obs_data_t *parent)
-{
-	obs_data_t *data = obs_data_get_obj(parent, name);
-	if (!data)
-		return;
-
-	obs_source_t *source = obs_load_source(data);
-	if (source) {
-		obs_set_output_source(channel, source);
-		obs_source_release(source);
-	}
-
-	obs_data_release(data);
-}
-
 static inline bool HasAudioDevices(const char *source_id)
 {
 	const char *output_id = source_id;
@@ -163,12 +76,13 @@ BroardcastBase::BroardcastBase()
 BroardcastBase::~BroardcastBase()
 {
 	signalHandlers.clear();
-	ClearSceneData();
-	service = nullptr;
-	outputHandler.reset();
+
 	obs_display_remove_draw_callback(previewer->GetDisplay(),
 		BroardcastBase::RenderMain, this);
 
+	ClearSceneData();
+	service = nullptr;
+	outputHandler.reset();
 	obs_enter_graphics();
 	gs_vertexbuffer_destroy(box);
 	gs_vertexbuffer_destroy(boxLeft);
@@ -901,7 +815,7 @@ void BroardcastBase::ClearSceneData()
 	obs_set_output_source(3, nullptr);
 	obs_set_output_source(4, nullptr);
 	obs_set_output_source(5, nullptr);
-
+#if 0
 	auto cb = [](void *unused, obs_source_t *source)
 	{
 		obs_source_remove(source);
@@ -910,7 +824,10 @@ void BroardcastBase::ClearSceneData()
 	};
 
 	obs_enum_sources(cb, nullptr);
-
+#endif
+	removeAllSource();
+	obs_scene_release(scene);
+	obs_source_release(fadeTransition);
 	blog(LOG_INFO, "All scene data cleared");
 	blog(LOG_INFO, "------------------------------------------------");
 }

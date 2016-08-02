@@ -40,25 +40,18 @@ void BroardcastBase::InitTransition(obs_source_t *transition)
 
 void BroardcastBase::InitDefaultTransitions()
 {
-	std::vector<OBSSource> transitions;
 	size_t idx = 0;
 	const char *id;
 
 	/* automatically add transitions that have no configuration (things
 	 * such as cut/fade/etc) */
 	while (obs_enum_transition_types(idx++, &id)) {
-		if (!obs_is_source_configurable(id)) {
+		if ((!obs_is_source_configurable(id)) && (strcmp(id, "fade_transition") == 0)) {
 			const char *name = obs_source_get_display_name(id);
-
 			obs_source_t *tr = obs_source_create_private(
 					id, name, NULL);
 			InitTransition(tr);
-			transitions.emplace_back(tr);
-
-			if (strcmp(id, "fade_transition") == 0)
-				fadeTransition = tr;
-
-			obs_source_release(tr);
+			fadeTransition = tr;
 		}
 	}
 }

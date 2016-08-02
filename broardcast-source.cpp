@@ -61,7 +61,6 @@ int  BroardcastBase::addNewSource(const char* srcName, int type,obs_data_t *sett
 		data.visible = true;
 		data.item = NULL;
 		obs_scene_atomic_update(scene, AddSource, &data);
-		obs_source_release(source);
 
 		//add source to map
 		struct SourceInfo info;
@@ -87,9 +86,37 @@ int  BroardcastBase::addNewSource(const char* srcName, int type,obs_data_t *sett
 	return -1;
 }
 
+void BroardcastBase::removeOBSSource(const char * srcName)
+{
+	obs_source_t * source = GetSource(srcName);
+	removeOBSSource(source);
+	nameArray.erase(srcName);
+}
+void BroardcastBase::removeOBSSource(obs_source_t *source)
+{
+	obs_sceneitem_t * item = sourceArray[source].item;
+	obs_data_t *settings = sourceArray[source].setting;
+	obs_data_release(settings);
+	obs_sceneitem_remove(item);
+	obs_source_release(source);
+	sourceArray.erase(source);
+}
+void BroardcastBase::removeAllSource()
+{
+	
+	while (sourceArray.begin() != sourceArray.end())
+	{
+		auto it = sourceArray.begin();
+		removeOBSSource(it->first);
+	}
+
+	sourceArray.clear();
+	nameArray.clear();
+}
+
 int BroardcastBase::setVisible(const char *srcName, bool isShow)
 {
-	obs_source_t * source = obs_get_source_by_name(srcName);
+	obs_source_t * source = GetSource(srcName);
 
 	if (!source){
 		blog(LOG_ERROR, "can not find %s source.",srcName);
@@ -97,7 +124,6 @@ int BroardcastBase::setVisible(const char *srcName, bool isShow)
 	}
 
 	obs_sceneitem_set_visible(sourceArray[source].item, isShow);
-	obs_source_release(source);
 }
 
 static bool select_one(obs_scene_t *scene, obs_sceneitem_t *item, void *param)
@@ -120,7 +146,6 @@ int BroardcastBase::setSelection(const char* srcName, bool select)
 	}
 
 	obs_scene_enum_items(scene, select_one, (obs_sceneitem_t*)sourceArray[source].item);
-	obs_source_release(source);
 	return 0;
 }
 
@@ -193,17 +218,9 @@ int BroardcastBase::getLogoGeometry(int& x, int& y, int& width, int& height)
 }
 int BroardcastBase::removeLogo()
 {
-	obs_source_t * source = GetSource(logSrcName.c_str());
-	if (!source){
-		return 0;
-	}
-	obs_sceneitem_t * item = sourceArray[source].item;
-	obs_data_t *settings = sourceArray[source].setting;
-	obs_data_release(settings);
-	obs_sceneitem_remove(item);
-	obs_source_remove(source);
-	sourceArray.erase(source);
+	removeOBSSource(logSrcName.c_str());
 	logoPath.erase();
+	return 0;
 }
 
 
@@ -548,7 +565,7 @@ std::string BroardcastBase::enumVideoFormats(const char* srcName, size_t idx)
 int BroardcastBase::setVideoFormat(const char* srcName,const char * format)
 {
 	setResolutionType2Custom(srcName);
-	obs_source_t  * source = obs_get_source_by_name(srcName);
+	obs_source_t  * source = GetSource(srcName);
 	if (!source){
 		blog(LOG_ERROR, "source %s has not existed.", srcName);
 		return -1;
@@ -628,7 +645,7 @@ std::string BroardcastBase::enumColorSpaces(const char* srcName, size_t idx)
 int BroardcastBase::setVideoColorSpace(const char* srcName, const char *colorspace)
 {
 
-	obs_source_t  * source = obs_get_source_by_name(srcName);
+	obs_source_t  * source = GetSource(srcName);
 	if (!source){
 		blog(LOG_ERROR, "source %s has not existed.", srcName);
 		return -1;
@@ -703,7 +720,7 @@ std::string BroardcastBase::enumColorRanges(const char* srcName, size_t idx)
 }
 int BroardcastBase::setVideoColorRange(const char* srcName, const char *colorrange)
 {
-	obs_source_t  * source = obs_get_source_by_name(srcName);
+	obs_source_t  * source = GetSource(srcName);
 	if (!source){
 		blog(LOG_ERROR, "source %s has not existed.", srcName);
 		return -1;
@@ -850,7 +867,7 @@ std::string BroardcastBase::enumAudioInDevices(const char* srcName, size_t idx)
 }
 int BroardcastBase::setAudioInputDevice(const char* srcName, const char *deviceName)
 {
-	obs_source_t  * source = obs_get_source_by_name(srcName);
+	obs_source_t  * source = GetSource(srcName);
 	if (!source){
 		blog(LOG_ERROR, "source %s has not existed.", srcName);
 		return -1;
@@ -1014,7 +1031,7 @@ int BroardcastBase::setCurrentSource(const char* srcName,
 	   const char *srcString)
 {
 	obs_prop_format prop_format = (obs_prop_format)prop_fmt;
-	obs_source_t  * source = obs_get_source_by_name(srcName);
+	obs_source_t  * source = GetSource(srcName);
 	if (!source){
 		blog(LOG_ERROR, "source %s has not existed.", srcName);
 		return -1;
@@ -1183,7 +1200,7 @@ enum pa_data_type{
 int BroardcastBase::setCurrentSetting(const char* srcName, const char *setting_item, int setting_type, const void * data)
 {
 	pa_data_type type = (pa_data_type)setting_type;
-	obs_source_t  * source = obs_get_source_by_name(srcName);
+	obs_source_t  * source = GetSource(srcName);
 	if (!source){
 		blog(LOG_ERROR, "source %s has not existed.", srcName);
 		return -1;
@@ -1207,7 +1224,7 @@ int BroardcastBase::setCurrentSetting(const char* srcName, const char *setting_i
 
 std::string BroardcastBase::getCurrentSetting(const char* srcName, const char *setting_item)
 {
-	obs_source_t  * source = obs_get_source_by_name(srcName);
+	obs_source_t  * source = GetSource(srcName);
 	if (!source){
 		blog(LOG_ERROR, "source %s has not existed.", srcName);
 		return "";
@@ -1220,7 +1237,7 @@ std::string BroardcastBase::getCurrentSetting(const char* srcName, const char *s
 }
 bool BroardcastBase::getCurrentSettingBool(const char* srcName, const char *setting_item)
 {
-	obs_source_t  * source = obs_get_source_by_name(srcName);
+	obs_source_t  * source = GetSource(srcName);
 	if (!source){
 		blog(LOG_ERROR, "source %s has not existed.", srcName);
 		return "";
@@ -1258,7 +1275,7 @@ std::string BroardcastBase::getTextFile(const char* srcName)
 //文本源的字体族，大小，线性渐变颜色
 std::string BroardcastBase::getTextFontFace(const char* srcName)
 {
-	obs_source_t  * source = obs_get_source_by_name(srcName);
+	obs_source_t  * source = GetSource(srcName);
 	if (!source){
 		blog(LOG_ERROR, "source %s has not existed.", srcName);
 		return "";
@@ -1272,7 +1289,7 @@ std::string BroardcastBase::getTextFontFace(const char* srcName)
 }
 int BroardcastBase::setTextFontFace(const char* srcName, const char *face)
 {
-	obs_source_t  * source = obs_get_source_by_name(srcName);
+	obs_source_t  * source = GetSource(srcName);
 	if (!source){
 		blog(LOG_ERROR, "source %s has not existed.", srcName);
 		return -1;
@@ -1287,7 +1304,7 @@ int BroardcastBase::setTextFontFace(const char* srcName, const char *face)
 }
 int BroardcastBase::getTextFontSize(const char* srcName)
 {
-	obs_source_t  * source = obs_get_source_by_name(srcName);
+	obs_source_t  * source = GetSource(srcName);
 	if (!source){
 		blog(LOG_ERROR, "source %s has not existed.", srcName);
 		return -1;
@@ -1301,7 +1318,7 @@ int BroardcastBase::getTextFontSize(const char* srcName)
 }
 int BroardcastBase::setTextFontSize(const char* srcName, int size)
 {
-	obs_source_t  * source = obs_get_source_by_name(srcName);
+	obs_source_t  * source = GetSource(srcName);
 	if (!source){
 		blog(LOG_ERROR, "source %s has not existed.", srcName);
 		return -1;
@@ -1317,7 +1334,7 @@ int BroardcastBase::setTextFontSize(const char* srcName, int size)
 //颜色字符串是argb，如#ffff00ff
 int BroardcastBase::setTextFontColor(const char* srcName, unsigned int color1, unsigned int color2)
 {
-	obs_source_t  * source = obs_get_source_by_name(srcName);
+	obs_source_t  * source = GetSource(srcName);
 	if (!source){
 		blog(LOG_ERROR, "source %s has not existed.", srcName);
 		return -1;
@@ -1332,7 +1349,7 @@ int BroardcastBase::setTextFontColor(const char* srcName, unsigned int color1, u
 
 unsigned int BroardcastBase::getTextFontColor1(const char* srcName)
 {
-	obs_source_t  * source = obs_get_source_by_name(srcName);
+	obs_source_t  * source = GetSource(srcName);
 	if (!source){
 		blog(LOG_ERROR, "source %s has not existed.", srcName);
 		return -1;
@@ -1345,7 +1362,7 @@ unsigned int BroardcastBase::getTextFontColor1(const char* srcName)
 
 unsigned int  BroardcastBase::getTextFontColor2(const char* srcName)
 {
-	obs_source_t  * source = obs_get_source_by_name(srcName);
+	obs_source_t  * source = GetSource(srcName);
 	if (!source){
 		blog(LOG_ERROR, "source %s has not existed.", srcName);
 		return -1;

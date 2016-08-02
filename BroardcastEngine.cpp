@@ -495,7 +495,8 @@ BroardcastEngine::BroardcastEngine()
 
 BroardcastEngine::~BroardcastEngine()
 {
-
+	delete bcBase;
+	obs_shutdown();
 }
 
 static void move_basic_to_profiles(void)
@@ -810,6 +811,7 @@ static int start_engine()
 {
 	int ret = -1;
 	static fstream logFile;
+	if (self) return -1;
 
 	self = new BroardcastEngine();
 	try {
@@ -1101,6 +1103,8 @@ int BroardcastEngine_Init()
 
 int BroardcastEngine_unInit()
 {
+	delete self;
+	self = NULL;
 	blog(LOG_INFO, "Number of memory leaks: %ld", bnum_allocs());
 	base_set_log_handler(nullptr, nullptr);
 	return 0;
